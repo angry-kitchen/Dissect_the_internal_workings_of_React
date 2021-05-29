@@ -1,0 +1,246 @@
+<html><head><meta charset="utf-8"><title>05 组件：从设计者的角度理解 React 组件-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        05 组件：从设计者的角度理解 React 组件
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-08-20 09:52:43
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img1.sycdn.imooc.com/5f2d0c690001327106400359.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">世上无难事,只要肯登攀。——毛泽东<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="什么是组件？" style="font-size: 30px;">什么是组件？</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 官方文档 - <a href="https://reactjs.org/docs/components-and-props.html">组件 &amp; Props</a> 给出了组件的描述：组件允许你将 UI 拆分为独立可复用的代码片段，并对每个片段进行独立构思。组件，从概念上类似于 JavaScript 函数，它接受任意的入参（即 <code>props</code>），并返回用于描述页面展示内容的 React 元素。那么，一个 React 组件的构成可以简单描述成下面的形式。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript">React组件 <span class="token operator">=</span> UI <span class="token operator">+</span> 逻辑（处理 props，state以及事件等）
+</code></pre>
+</div><div class="cl-preview-section"><h3 id="使用函数定义组件">使用函数定义组件</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">对于开发者来说，定义组件最简单的方式就是编写 JavaScript 函数，如代码示例 2.2.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">Welcome</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> <span class="token operator">&lt;</span>h1<span class="token operator">&gt;</span>Hello<span class="token punctuation">,</span> <span class="token punctuation">{</span>props<span class="token punctuation">.</span>name<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">&gt;</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.2.1 函数组件的定义方式</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">该函数是一个有效的 React 组件，它接收唯一带有数据的 props 对象与并返回 <strong>React 元素</strong>。这类组件被称为 <strong>函数组件</strong>，因为它本质上就是 JavaScript 函数。</p>
+</div><div class="cl-preview-section"><h3 id="使用-class-定义组件">使用 class 定义组件</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">也可以使用 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 的 class</a> 来定义组件，如代码示例 2.2.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&lt;</span>h1<span class="token operator">&gt;</span>Hello<span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>props<span class="token punctuation">.</span>name<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">&gt;</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">代码示例 2.2.2 class 组件的定义方式</font></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">函数组件相对于 class 组件有其自身的特点，比如下面几个方面：</p>
+</div><div class="cl-preview-section"><ul>
+<li style="font-size: 20px; line-height: 38px;">函数组件不会被实例化，整体渲染性能得到提升；</li>
+<li style="font-size: 20px; line-height: 38px;">函数组件不能访问<code>this</code>对象；</li>
+<li style="font-size: 20px; line-height: 38px;">函数组件无法继承<code>React.Component</code>上的属性，因此无法访问生命周期的方法；</li>
+<li style="font-size: 20px; line-height: 38px;">无状态函数组件只能访问输入的<code>props</code>。</li>
+</ul>
+</div><div class="cl-preview-section"><h3 id="高阶组件">高阶组件</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">什么是高阶组件？</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>一个高阶组件只是</strong>一个包装了另外一个 React 组件的 <strong>React 组件</strong>。注意，这里说的是「包装」而不是嵌套成父子组件那样。那么如何定义一个高阶组件呢？见代码示例 2.2.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">ppHOC</span><span class="token punctuation">(</span>WrappedComponent<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> <span class="token keyword">class</span> <span class="token class-name">PP</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token operator">&lt;</span>WrappedComponent <span class="token punctuation">{</span><span class="token operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span>props<span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">&gt;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.2.3 定义一个高阶组件</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">高阶组件的本质就是一个 JavaScript 函数，该函数的参数就是我们想要包装的组件并且最终在不改动UI的情况下作为函数内部组件的元素返回，那么为什么要包装这个组件呢？因为这样的处理可以绑定函数内部组件的一些<code>props</code>。高阶组件的实现离不开组件就是函数的本质，因为 JavaScript 支持高阶函数，所以，高阶组件的设计可以认为是高阶函数的上层拓展。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">高阶组件有什么作用呢？<strong>高阶组件可以达到代码复用，逻辑抽象，底层代码抽离，渲染劫持，state 抽象和 props 更改等目的</strong>。</p>
+</div><div class="cl-preview-section"><h2 id="组件的设计思想—数据驱动更新的优雅实现" style="font-size: 30px;">组件的设计思想—数据驱动更新的优雅实现</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">所谓数据驱动更新指的是当一个组件内部的数据发生变化时，组件中返回的 UI 也随之变化并更新到屏幕。传统的 UI 模式中，我们一般是怎么保证组件内部的 UI 处于最新信息的状态呢？见代码示例 2.2.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">Form</span> <span class="token keyword">extends</span> <span class="token class-name">TraditionalObjectOrientedView</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> isSubmitted<span class="token punctuation">,</span> buttonText <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>attrs<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isSubmitted <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 如果form还没有被提交，则创建button</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>button <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Button</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        children<span class="token punctuation">:</span> buttonText<span class="token punctuation">,</span>
+        color<span class="token punctuation">:</span> <span class="token string">'blue'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>el<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">.</span>el<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 如果button已经存在，则更新button的文本</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">.</span>attrs<span class="token punctuation">.</span>children <span class="token operator">=</span> buttonText<span class="token punctuation">;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>isSubmitted <span class="token operator">&amp;&amp;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 如果form已经被提交，则删除button</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>el<span class="token punctuation">.</span><span class="token function">removeChild</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">.</span>el<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>button<span class="token punctuation">.</span><span class="token function">destroy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.2.4 传统方式定义组件</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上面是以传统方式定义<code>Form</code>组件的伪代码，其主要思想就是根据属性值的变化进行对应的 DOM 处理以保证组件能够及时返回最新的 UI 状态。这种设计组件的方式存在的问题就是，<strong>随着属性值的种类增多组件变得愈发难维护，代码行数将会朝着组件可能状态数的平方量级增长</strong>。那么，React 是如何优雅的解决这个问题的呢？</p>
+</div><div class="cl-preview-section"><pre class=" language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">Form</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>state <span class="token operator">=</span> <span class="token punctuation">{</span>
+      button<span class="token punctuation">:</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+  
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> isSubmitted<span class="token punctuation">,</span> buttonText <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>props<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"wrap-box"</span><span class="token operator">&gt;</span>
+      <span class="token punctuation">{</span>
+         <span class="token operator">!</span>isSubmitted <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>button <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>
+         <span class="token operator">&lt;</span>button key<span class="token operator">=</span><span class="token string">"1"</span><span class="token operator">&gt;</span><span class="token punctuation">{</span>buttonText<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+         <span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.2.5 使用 React 定义组件</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 使用<code>state</code>为组件维护了自己的内部状态，使用<code>props</code>为组件维护了自己的外部状态。<code>state</code>和<code>props</code>的变化意味着组件的 UI 需要更新。事实上，React 组件中的 UI 就是它的「元素」，React 元素是一种普通的 JavaScript 对象。因此，<code>state</code>和<code>props</code>的变化只需要更新 JavaScript 对象即可。由于更新 JavaScript 对象要远比直接 DOM 树更加轻巧便利也使得 React 组件的更新渲染性能达到了很高的标准。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本节介绍了 React 对组件的定义方式以及 React 如何以比较优雅的方式实现数据驱动更新的思想。在下一节将会介绍如何深入理解组件的生命周期。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2269">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            04 React 世界中那些重要的概念
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2271">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            06 生命周期：如何理解 React 组件生命周期？
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img3.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

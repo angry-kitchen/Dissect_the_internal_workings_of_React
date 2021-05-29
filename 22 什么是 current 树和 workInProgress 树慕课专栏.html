@@ -1,0 +1,176 @@
+<html><head><meta charset="utf-8"><title>22 什么是 current 树和 workInProgress 树-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        22 什么是 current 树和 workInProgress 树
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-09-16 09:55:30
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img3.sycdn.imooc.com/5f55af16000117ff06400426.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">老骥伏枥，志在千里； 烈士暮年，壮心不已。 ——曹操<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上一节介绍了应用程序首次渲染时 React 在 prerender 阶段所做的一些具体工作。从本节开始将要介绍的就是应用程序首次渲染时 React 在 render 阶段所做的工作。在前面文章中多次提到过 workInProgress 树，React 在 render 阶段的其中一项重要工作就是构建 workInProgress 树。那么，current 树和 workInProgress 树到底是什么呢？</p>
+</div><div class="cl-preview-section"><h2 id="current-树和-workinprogress-树均是-fiber-树" style="font-size: 30px;">current 树和 workInProgress 树均是 Fiber 树</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>current 树是 fiberRoot 对象上面<code>current</code>属性指向的内存空间，实际上就是一个对象，该对象由众多 Fiber 结点连接而成。</strong> current 树描述的是应用程序渲染完成后最终的 Fiber 结构，它反映了用于渲染 UI 的状态。在应用程序首次渲染过程 prerender 阶段执行结束后，fiberRoot 对象的结构如图 5.3.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55ae100001aa7409620617.png" data-original="//img1.sycdn.imooc.com/5f55ae100001aa7409620617.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.3.1 fiberRoot 对象初始化完成后的结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">由于是应用程序的首次渲染，在渲染未完成之前 current 树中只有一个 Fiber 结点，该结点也就是 Fiber 树的根结点。那么 workInProgress 树又是什么呢？见图 5.3.2。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55ae1f0001e38a12770632.png" data-original="//img1.sycdn.imooc.com/5f55ae1f0001e38a12770632.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.3.2 fiberRoot 对象初始化完成后 workInProgress 树尚未开始构建</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>workInProgress 树是 fiberRoot 对象上面<code>current</code>属性指向的对象上面<code>alternate</code>属性指向的内存空间，也是一个对象，在渲染结束后该对象被赋值给 current 。也就是说 workInProgress 树是 current 树的中间形态。</strong> React 的核心原则之一是一致性， React 总是一次性更新 DOM （不会显示部分中间结果）。因此，workInProgress 树就充当用户不可见的「草稿」，这样 React 可以先处理所有组件，然后将更新统一刷新到屏幕。下面，我们详细看一下 current 树和 workInProgress 树之间的关系。</p>
+</div><div class="cl-preview-section"><h2 id="current-树与-workinprogress-树之间的关系" style="font-size: 30px;">current 树与 workInProgress 树之间的关系</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">所有更新计算相关的工作都在 workInProgress 树的 Fiber 结点上执行。处理完更新并完成所有相关工作后，会得到一个带有更新标识的 Fiber 结点链表，也就是副作用链表，它是 workInProgress 树的子集。React 将副作用链表映射到屏幕上后，workInProgress就会变成 current 树，其中赋值逻辑见代码示例 5.3.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// fiberRoot.current.alternate为workInProgress树</span>
+<span class="token comment">// 将workInProgress树的引入存入到finishedWork变量中</span>
+<span class="token keyword">var</span> finishedWork <span class="token operator">=</span> fiberRoot<span class="token punctuation">.</span>current<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+<span class="token comment">// 将fiberRoot.current.alternate指向的内存制为null</span>
+fiberRoot<span class="token punctuation">.</span>current<span class="token punctuation">.</span>alternate <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token comment">// 将workInProgress树赋值给current树</span>
+fiberRoot<span class="token punctuation">.</span>current <span class="token operator">=</span> finishedWork<span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.3.1 渲染完成后 current 树与 workInProgress 树赋值逻辑</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">workInProgress 树构建完成后 fiberRoot 对象的简化结构见图 5.3.3。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55ae3a0001b61719820784.png" data-original="//img1.sycdn.imooc.com/5f55ae3a0001b61719820784.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.3.3 render 阶段完成后 fiberRoot 对象后的结构简图</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 应用程序首次渲染时构建 workInProgress 树的过程也是将 React 元素树转化为 Fiber 树的过程， workInProgress 树构建完成后会在该「树」上面完成更新计算、调用生命周期函数以及收集副作用列表等工作。收集好的副作用列表会在 commit 阶段统一映射到屏幕上。至此  workInProgress 树在此次更新历程中已经完成了它的使命，React 会将当前的 current 树设置为 workInProgress 树，将 workInProgress 树置为 <code>null</code>，应用程序首次首次渲染 render 阶段结束后的 fiberRoot 对象结构如图 5.3.4。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55ae42000192c715040794.png" data-original="//img1.sycdn.imooc.com/5f55ae42000192c715040794.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.3.4 应用程序首次渲染完成后 fiberRoot 对象后的结构简图</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">图 5.3.3 和图 5.3.4 展示了  workInProgress 树从构建完成到销毁这个过程中 fiberRoot 对象数据结构的变化。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本文简单介绍了 React Fiber 架构中的 current 树和 workInProgress 树以及它们之间的关系。应用程序渲染时在 render 阶段的一个重要工作就是构建 workInProgress 树，构建 workInProgress 树的过程中 React 也会完成更新计算、调用生命周期函数以及收集副作用列表等工作。那么，这个过程是什么样的呢？下一节将会介绍 <strong>React 如何构建 workInProgress 树</strong> 。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2327">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            21 React 应用程序首次渲染时 prerender 阶段的工作
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2329">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            23 React 如何构建 workInProgress 树
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img3.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

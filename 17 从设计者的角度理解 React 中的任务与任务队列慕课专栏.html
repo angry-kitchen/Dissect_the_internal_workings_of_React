@@ -1,0 +1,254 @@
+<html><head><meta charset="utf-8"><title>17 从设计者的角度理解 React 中的任务与任务队列-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        17 从设计者的角度理解 React 中的任务与任务队列
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-09-02 15:47:48
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img3.sycdn.imooc.com/5f4389ba0001ffce19201280.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">勤学如春起之苗，不见其增，日有所长。——陶潜<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 中的任务是由任务调度器（scheduler）统一管理。任务调度器（scheduler）是独立于<code>react</code>和<code>react-dom</code> 的模块。React 会使用调度器（scheduler）模块暴露出的一些方法安排任务执行。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f4389820001117b05470367.png" data-original="//img1.sycdn.imooc.com/5f4389820001117b05470367.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器可以观测浏览器的运行情况，只有浏览器空闲的时候才能让 Fiber 结点去执行它的更新。那么，任务调度器是如何定义任务以及管理任务（如将任务加入到任务队列）的呢？</p>
+</div><div class="cl-preview-section"><h2 id="任务调度器对任务的定义" style="font-size: 30px;">任务调度器对任务的定义</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器（<code>scheduler</code>）中对任务做了如下的定义，见代码示例 4.2.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/scheduler/src/Scheduler.js</span>
+<span class="token keyword">var</span> task <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 任务的回调函数，主要用于和其他框架的链接，比如React fiber</span>
+  callback<span class="token punctuation">,</span>
+  <span class="token comment">// 任务优先级，数值越小优先级别越高，具体取值见代码示例 4.2.2</span>
+  priorityLevel<span class="token punctuation">,</span>
+  <span class="token comment">// 任务开始执行时间</span>
+  startTime<span class="token punctuation">,</span>
+  <span class="token comment">// 任务过期时间，具体取值见代码示例4-2-3</span>
+  expirationTime<span class="token punctuation">,</span>
+  <span class="token comment">// 下一个任务</span>
+  next<span class="token punctuation">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+  <span class="token comment">// 上一个任务</span>
+  previous<span class="token punctuation">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 4.2.1 任务的定义</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">每个任务都有自己的执行优先级，任务调度器（<code>scheduler</code>）对任务优先级的取值范围做了如下的定义，见代码示例 4.2.2。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：任务数据结构中的<code>callback</code>很重要，后面会有详细介绍。</p>
+</blockquote>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/scheduler/src/Scheduler.js</span>
+<span class="token comment">// 立即执行（可由饥饿任务转换），最高优先级</span>
+<span class="token keyword">var</span> ImmediatePriority <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token comment">// 用户阻塞级别（如外部事件），次高优先级</span>
+<span class="token keyword">var</span> UserBlockingPriority <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token comment">// 普通优先级</span>
+<span class="token keyword">var</span> NormalPriority <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token comment">// 低优先级</span>
+<span class="token keyword">var</span> LowPriority <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+<span class="token comment">// 最低优先级，空闲时去执行</span>
+<span class="token keyword">var</span> IdlePriority <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 4.2.2 任务优先级的取值范围</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器（<code>scheduler</code>）对任务过期时间的取值范围做了如下的定义，见代码示例 4.2.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/scheduler/src/Scheduler.js</span>
+<span class="token comment">// 优先级-立即执行</span>
+<span class="token comment">// 32位系统在V8中的最大整数大小 Math.pow(2, 30) - 1 = 0b111111111111111111111111111111</span>
+<span class="token keyword">var</span> maxSigned31BitInt <span class="token operator">=</span> <span class="token number">1073741823</span><span class="token punctuation">;</span>
+<span class="token comment">// 立即过期/饥饿的任务</span>
+<span class="token keyword">var</span> IMMEDIATE_PRIORITY_TIMEOUT <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token comment">// 用户阻塞任务的过期时间250ms</span>
+<span class="token keyword">var</span> USER_BLOCKING_PRIORITY <span class="token operator">=</span> <span class="token number">250</span><span class="token punctuation">;</span>
+<span class="token comment">// 正常任务的过期时间5000ms</span>
+<span class="token keyword">var</span> NORMAL_PRIORITY_TIMEOUT <span class="token operator">=</span> <span class="token number">5000</span><span class="token punctuation">;</span>
+<span class="token comment">// 低优先级任务的过期时间10000ms</span>
+<span class="token keyword">var</span> LOW_PRIORITY_TIMEOUT <span class="token operator">=</span> <span class="token number">10000</span><span class="token punctuation">;</span>
+<span class="token comment">// 最低优先级任务的过期时间maxSigned31BitInt（大约12天后过期）</span>
+<span class="token keyword">var</span> IDLE_PRIORITY <span class="token operator">=</span> maxSigned31BitInt<span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 4.2.3</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器会通过 <code>performance.now() + timeout</code>来计算出任务的过期时间，随着时间的推移，当前时间会越来越接近这个过期时间，所以过期时间越小的代表优先级越高。如果过期时间已经比当前时间小了，说明这个任务已经过期了还没执行，需要立马去执行。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">任务的过期时间和「更新」的过期时间是两个层级，任务的过期时间是在任务体系里面用于监控任务的时间，它和任务优先级是强相关的，其过期时间越小，表示该任务的执行优先级就越高，越应该优先被执行。</p>
+<p style="font-size: 20px; line-height: 38px;"><code>window.performance.now</code>是浏览器内置的时钟，从页面加载开始计时，返回到当前的总时间，单位<code>ms</code>。比如我们打开某个页面10分钟后，在控制台执行该函数，得到的值是600000。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h2 id="根据过期时间将任务加入到任务队列" style="font-size: 30px;">根据过期时间将任务加入到任务队列</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器（<code>scheduler</code>）为任务维护了一个队列，这个队列的结构是 <strong>双向循环链表</strong>，任务加入任务队列（taskQueue）的过程也是<strong>将所有任务根据过期时间进行排序的过程</strong>，其逻辑见代码示例 4.2.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/scheduler/src/Scheduler.js</span>
+<span class="token comment">// 将新任务插入到任务队列是会根据任务的超时/过期时间排序，如果队列中已经有了与新任务相同超时/过期时间的任务，则</span>
+<span class="token comment">// 将新任务插入到它们的后面</span>
+<span class="token keyword">function</span> <span class="token function">insertScheduledTask</span><span class="token punctuation">(</span>newTask<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>firstTask <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果firstTask为null，那么newTask成为任务队列中的第一个任务</span>
+    firstTask <span class="token operator">=</span> newTask<span class="token punctuation">.</span>next <span class="token operator">=</span> newTask<span class="token punctuation">.</span>previous <span class="token operator">=</span> newTask<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> next <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> task <span class="token operator">=</span> firstTask<span class="token punctuation">;</span>
+    <span class="token comment">// 遍历任务链表</span>
+    <span class="token keyword">do</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>expirationTime <span class="token operator">&lt;</span> task<span class="token punctuation">.</span>expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 如果新任务的过期时间小于链表中某个任务的过期时间，说明已经找到了任务链表中要插入的位置，则跳出循环</span>
+        next <span class="token operator">=</span> task<span class="token punctuation">;</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      task <span class="token operator">=</span> task<span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>task <span class="token operator">!==</span> firstTask<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>next <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 任务链表遍历结束，next指针为null，说明任务链表中的任务过期时间均比新任务的过期时间大，则将新任务插入到链表尾部</span>
+      next <span class="token operator">=</span> firstTask<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>next <span class="token operator">===</span> firstTask<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 如果next指向firstTask，说明新任务在整个链表中拥有最小的过期时间</span>
+      firstTask <span class="token operator">=</span> newTask<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+		
+    <span class="token comment">// 操作任务链表，将新任务插入到合适的位置</span>
+    <span class="token keyword">var</span> previous <span class="token operator">=</span> next<span class="token punctuation">.</span>previous<span class="token punctuation">;</span>
+    previous<span class="token punctuation">.</span>next <span class="token operator">=</span> next<span class="token punctuation">.</span>previous <span class="token operator">=</span> newTask<span class="token punctuation">;</span>
+    newTask<span class="token punctuation">.</span>next <span class="token operator">=</span> next<span class="token punctuation">;</span>
+    newTask<span class="token punctuation">.</span>previous <span class="token operator">=</span> previous<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 4.2.4 任务加入到任务队列</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">将任务插入到任务队列其实就是一个处理双向链表的过程，在这个过程中使用<code>task = task.next</code>走向下一个结点，当找到正确的结点位置时使用<code>next</code>和<code>previous</code>指针将新结点和链表中已有的结点串联起来。任务加入到任务队列后，任务队列（taskQueue）会形成一个双向循环链表，其内部结构如图 4.2.1。<br>
+<img class="" src="https://img1.sycdn.imooc.com/5f4389630001556f07660575.png" data-original="//img1.sycdn.imooc.com/5f4389630001556f07660575.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 4.2.1 任务队列（taskQueue）数据结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">任务调度器中维护的任务队列在内存中的结构是一个双向循环链表，每个 task 对象可以通过 <code>previous</code>和<code>next</code>找到其上一个任务和下一个任务。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">「任务」是一个抽象的概念，React 给「任务」定义了数据结构，使其具有过期时间、下一个任务和上一个任务等属性，多个任务对象链接成一个双向循环链表。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本节介绍任务偏向于整体层面，如任务的定义、任务队列的结构及将任务加入到任务队列的逻辑。有关「任务的具体内容」并没有详细介绍。那么，任务的具体内容到底是什么呢？在揭晓答案之前我们在下一节中先来了解一下任务调度器是如何和浏览器进行通信的。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2305">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            16 如何理解 React 中的更新与任务
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2307">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            18 React 中的任务调度器（scheduler）
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img2.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

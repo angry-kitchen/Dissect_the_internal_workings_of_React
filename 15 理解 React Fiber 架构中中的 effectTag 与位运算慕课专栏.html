@@ -1,0 +1,206 @@
+<html><head><meta charset="utf-8"><title>15 理解 React Fiber 架构中中的 effectTag 与位运算-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        15 理解 React Fiber 架构中中的 effectTag 与位运算
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-08-28 10:25:48
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img4.sycdn.imooc.com/5f486b050001868b06400359.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">老骥伏枥，志在千里； 烈士暮年，壮心不已。 ——曹操<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上一节提到，Fiber 结点中<code>effectTag</code>属性想当重要，它用于标识结点的更新类型（如插入、修改或者删除）。本节将详细介绍<code>effectTag</code>属性的取值以及其位运算。</p>
+</div><div class="cl-preview-section"><h2 id="effecttag-可以取哪些值" style="font-size: 30px;">effectTag 可以取哪些值</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>effectTag</code>是构造函数<code>FiberNode</code>的一个属性，它用于标识当前 Fiber 结点的「更新」类型，该属性的取值见代码示例 3.5.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/shared/ReactSideEffectTags.js</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> NoEffect <span class="token operator">=</span> <span class="token comment">/*              */</span> <span class="token number">0b000000000000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> PerformedWork <span class="token operator">=</span> <span class="token comment">/*         */</span> <span class="token number">0b000000000001</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">const</span> Placement <span class="token operator">=</span> <span class="token comment">/*             */</span> <span class="token number">0b000000000010</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Update <span class="token operator">=</span> <span class="token comment">/*                */</span> <span class="token number">0b000000000100</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> PlacementAndUpdate <span class="token operator">=</span> <span class="token comment">/*    */</span> <span class="token number">0b000000000110</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Deletion <span class="token operator">=</span> <span class="token comment">/*              */</span> <span class="token number">0b000000001000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> ContentReset <span class="token operator">=</span> <span class="token comment">/*          */</span> <span class="token number">0b000000010000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Callback <span class="token operator">=</span> <span class="token comment">/*              */</span> <span class="token number">0b000000100000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> DidCapture <span class="token operator">=</span> <span class="token comment">/*            */</span> <span class="token number">0b000001000000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Ref <span class="token operator">=</span> <span class="token comment">/*                   */</span> <span class="token number">0b000010000000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Snapshot <span class="token operator">=</span> <span class="token comment">/*              */</span> <span class="token number">0b000100000000</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Passive <span class="token operator">=</span> <span class="token comment">/*               */</span> <span class="token number">0b001000000000</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">const</span> LifecycleEffectMask <span class="token operator">=</span> <span class="token comment">/*   */</span> <span class="token number">0b001110100100</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">const</span> HostEffectMask <span class="token operator">=</span> <span class="token comment">/*        */</span> <span class="token number">0b001111111111</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.5.1 effectTag 的取值范围</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>NoEffect</code>一般作为 EffectTag 的初始值，或者用于 EffectTag 的比较判断，其值为<code>0</code>表示没有副作用，也就是不涉及更新。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>PerformedWork</code>由 React devtools 读取，<code>NoEffect</code> 和 <code>PerformedWork</code> 都不会被 commit，当创建 Effect List（后面会介绍）时，会跳过<code>NoEffect</code> 和 <code>PerformedWork</code>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>Placement</code>表示向树中插入新的子节点，对应的状态为 MOUNTING，当执行<code>commitPlacement</code>函数完成插入后，清除该标志位。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>Update</code>表示当<code>props</code>、<code>state</code>、<code>context</code>发生变化或者 forceUpdate 时，会标记为<code>Update</code>，检查到标记后，执行<code>commitUpdate</code>函数进行属性更新，与其相关的生命周期函数为<code>componentDidMount</code>和<code>componentDidUpdate</code>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>Deletion</code>标记将要卸载的结点，检查到标记后，执行<code>commitDeletion</code>函数对组件进行卸载，在节点树中删除对应对节点，与其相关的生命周期函数为<code>componentWillUnmount</code>。</p>
+</div><div class="cl-preview-section"><h2 id="为什么使用数字二进制表示-effecttag-的值" style="font-size: 30px;">为什么使用数字二进制表示 EffectTag 的值</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">我们知道数字的二进制表示主要由 <code>0</code>和<code>1</code>组成，在逻辑判断中数字<code>1</code>和数字<code>0</code>一般表示相反的描述，比如<code>1</code>表示「正确」那么<code>0</code>就表示「错误」。此外，我们也可以用<code>1</code>和<code>0</code>表示「有」和「没有」。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">仔细观察一下 EffectTag 的取值，大部分的变量里面只有一个<code>1</code>，其他的都是<code>0</code>。这说明了什么呢？</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>Placement</code>的值为<code>0b000000000010</code>，其中的<code>1</code>在右边第二位。<code>Update</code>的值为<code>0b000000000100</code>，其中的<code>1</code>在右边第三位。而<code>PlacementAndUpdate</code>的值为<code>0b000000000110</code>，它有两个<code>1</code>分别在右边第二位和第三位。这时我们就发现了一个规律，如果数值中只有一个<code>1</code>，说明该数值只代表「单一操作」，比如<code>Placement</code>和<code>Update</code>分别代表的是「插入」和「删除」。如果数值中有多个<code>1</code>，说明该数值代表「复合操作」，比如<code>PlacementAndUpdate</code>代表的是既要「插入」也要「更新」。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">因此，我们可以将 <strong>EffectTag 的数值二进制表示中不同位置的<code>1</code>就理解为不同的「操作」</strong>。</p>
+</div><div class="cl-preview-section"><h2 id="如何理解-react-中的位运算" style="font-size: 30px;">如何理解 React 中的位运算</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 在很多地方用数字二进制来表示一些变量的值（如上面的 EffectTag），这样做有什么好处呢？答案是方便做位运算，见代码示例 3.5.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript">workInProgress<span class="token punctuation">.</span>effectTag <span class="token operator">|=</span> PerformedWork
+<span class="token comment">// 等同于</span>
+workInProgress<span class="token punctuation">.</span>effectTag <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>effectTag <span class="token operator">|</span> PerformedWork
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.5.2</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在 JavaScript 中<code>|</code>和<code>&amp;</code>两个运算符分别代表的是按位或和按位与，这两个运算符都是按照数值的二进制来进行运算的。<code>|</code>的运算法则是两位其中一个为<code>1</code>，结果为<code>1</code>，否则为<code>1</code>。<code>&amp;</code>的运算法则是两位同时为<code>1</code>，结果才为<code>1</code>，否则为<code>0</code>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">那么，React 中的位运算（如代码示例 3.5.2）该怎么理解呢？</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">var</span> effectTag <span class="token operator">=</span> Update
+
+effectTag <span class="token operator">|=</span> Ref <span class="token comment">// effectTag此时为0b0000010000100</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token punctuation">(</span>effectTag <span class="token operator">&amp;</span> Update<span class="token punctuation">)</span> <span class="token operator">===</span> Update<span class="token punctuation">)</span> <span class="token comment">// true</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token punctuation">(</span>effectTag <span class="token operator">&amp;</span> Ref<span class="token punctuation">)</span> <span class="token operator">===</span> Ref<span class="token punctuation">)</span> <span class="token comment">// true</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token punctuation">(</span>effectTag <span class="token operator">&amp;</span> Placement<span class="token punctuation">)</span> <span class="token operator">===</span> Placement<span class="token punctuation">)</span> <span class="token comment">// false</span>
+effectTag <span class="token operator">&amp;=</span> <span class="token operator">~</span>Ref
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token punctuation">(</span>effectTag <span class="token operator">&amp;</span> Ref<span class="token punctuation">)</span> <span class="token operator">===</span> Ref<span class="token punctuation">)</span> <span class="token comment">// false</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.5.3</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">结合代码示例 3.5.1 和代码示例 3.5.3 可以发现<code>(effectTag &amp; Update) === Update</code>和<code>(effectTag &amp; Ref) === Ref</code>的返回值为<code>true</code>，<code>(effectTag &amp; Placement) === Placement</code>的返回值为<code>false</code>，这是因为<code>effectTag</code>数值的二进制串中<code>Update</code>和<code>Ref</code>的对应位值均为<code>1</code>，而<code>Placement</code>对应位的值为<code>0</code>。因此，我们可以对代码示例 3.5.3 中<code>&amp;</code>运算符的实际意义理解成：<code>&amp;</code>操作可以用来判断某个变量中是否含有某个属性。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：这里可能需要大家稍微思考一些哦！</p>
+</blockquote>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本章主要介绍的是 React Fiber 架构的基础理论。React 在应用程序运行时在这个架构上面做的一些工作，如更新计算以及将更新映射到屏幕将会在第五章中详细介绍。下一章，我们会介绍 React 世界中的任务调度基础。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2298">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2305">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            16 如何理解 React 中的更新与任务
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img1.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

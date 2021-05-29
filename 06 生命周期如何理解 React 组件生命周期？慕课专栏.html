@@ -1,0 +1,233 @@
+<html><head><meta charset="utf-8"><title>06 生命周期：如何理解 React 组件生命周期？-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        06 生命周期：如何理解 React 组件生命周期？
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-10-19 17:46:49
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img1.sycdn.imooc.com/5f2d0c790001526f06400359.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">不经一翻彻骨寒，怎得梅花扑鼻香。——宋帆<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h1 id="如何理解-react-组件的生命周期">如何理解 React 组件的生命周期</h1>
+</div><div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">很多面试官喜欢考察求职者对 React 组件生命周期的理解，如果求职者只是简单的把组件生命周期中的几个钩子函数说了出来，那么这样的回答并不能激起面试官的兴趣。那么，该如何回答有关 React 组件生命周期的理解呢？先来看一下代码示例 2.3.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">UpdateCounter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+	<span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>state <span class="token operator">=</span> <span class="token punctuation">{</span>count<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>handleClick <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>handleClick<span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token function">componentWillMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件首次渲染时会调用</span>
+		console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入componentWillMount函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件首次渲染时会调用</span>
+		console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入componentDidMount函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+  
+  <span class="token function">componentWillReceiveProps</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件props更新时会调用，不稳定，父组件更新也可能会引起子组件执行该函数，需要判断nextProps === this.props</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入componentWillReceiveProps函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件更新时会调用，react性能优化非常重要的一环，此处可阻止不必要的更新</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入shouldComponentUpdate函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token function">componentWillUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件更新时会调用，此时不可以修改state</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入componentWillUpdate函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 组件更新后会调用</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'进入componentDidUpdate函数'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+	<span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+			count<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>count <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+  
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token punctuation">(</span>
+			<span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"wrap-box"</span><span class="token operator">&gt;</span>
+      	<span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"title-text"</span><span class="token operator">&gt;</span>点击计数<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+				<span class="token operator">&lt;</span>button key<span class="token operator">=</span><span class="token string">"1"</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>handleClick<span class="token punctuation">}</span><span class="token operator">&gt;</span>Update counter<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+				<span class="token operator">&lt;</span>span key<span class="token operator">=</span><span class="token string">"2"</span> className<span class="token operator">=</span><span class="token string">"span-text"</span><span class="token operator">&gt;</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>count<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">&gt;</span>
+			<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+		<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+ReactDOM<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>UpdateCounter <span class="token operator">/</span><span class="token operator">&gt;</span><span class="token punctuation">,</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">代码示例 2.3.1</font></p>
+代码示例 2.3.1 中定义了一个`UpdateCounter`组件，该组件的作用是统计按钮的点击次数。前面提到了 React 应用程序运行过程中组件会有两种渲染流程—**首次渲染（Mounting）** 和 **更新渲染（Updation）**。两种渲染流程会调用不同的生命周期函数，见图 2.3.1。
+</div><div class="cl-preview-section"><h2 id="组件渲染流程与生命周期函数" style="font-size: 30px;">组件渲染流程与生命周期函数</h2>
+</div><div class="cl-preview-section"><h3 id="react-v16.3-之前的组件渲染流程与生命周期函数">React v16.3 之前的组件渲染流程与生命周期函数</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f8d5d360001728830020644.png" data-original="//img1.sycdn.imooc.com/5f8d5d360001728830020644.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">图 2.3.1 React v16.3 之前不同渲染流程组件调用生命周期函数的时机与方式</font></p>
+图 2.3.1分别以组件的首次渲染和更新渲染流程为主线描绘其生命周期函数的调用时机与方式，调用组件的生命周期函数前必须取得组件实例。首次渲染时以`instance = new component(...)`的方式创建并获得组件实例。更新渲染时以`instance = workInProgress.stateNode`的方式获得组件实例。
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：上面的<code>component</code>指的是对应组件的构造函数，<code>workInProgress</code>指的是对应组件的 Fiber 结点。</p>
+</blockquote>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React v15 版中组件的生命周期函数整体调用逻辑见图 2.3.2。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f8d5e580001c23316000739.jpg" data-original="//img1.sycdn.imooc.com/5f8d5e580001c23316000739.jpg" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">图 2.3.2 React v15 版生命周期函数调用逻辑</font></p>
+现在我们对生命周期的理解进行简单总结如下：
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 组件生命周期是指使用 class 定义的组件在整个应用程序运行过程中会经历<strong>首次渲染（挂载）</strong>，<strong>更新渲染</strong> 和 <strong>卸载</strong>三个过程。在不同的过程可以调用不同的生命周期函数。组件在首次渲染时会被实例化，然后调用实例上面的<code>componentWillMount</code>，<code>render</code>和<code>componentDidMount</code>函数。组件在更新渲染时可以调用<code>componentWillReceiveProps</code>，<code>shouldComponentUpdate</code>，<code>componentWillUpdate</code>，<code>render</code>和<code>componentDidUpdate</code>函数。组件在卸载时可以调用<code>componentWillUnmount</code>函数。</p>
+</div><div class="cl-preview-section"><h3 id="react-v16.3-之后的组件渲染流程与生命周期函数">React v16.3 之后的组件渲染流程与生命周期函数</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">从 React v16.3 版本开始，React 引入了两个新的生命周期函数 <code>getDerivedStateFromProps</code> 和 <code>getSnapshotBeforeUpdate</code> 。同时 React 不再建议使用<code>componentWillMount</code>，<code>componentWillReceiveProps</code>和<code>componentWillUpdate</code>三个生命周期函数，如果使用的话会在控制台收到 Warning 信息，见图 2.3.3。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f8d5d960001e48017940950.png" data-original="//img1.sycdn.imooc.com/5f8d5d960001e48017940950.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">图 2.3.3 React v16.3 版以后对三个生命周期函数给出 Warning</font></p>
+React v16.3 版本中组件 **首次渲染（Mounting）** 和 ** 更新渲染（Updation）** 调用生命周期函数的时机与方式，见图 2.3.4。
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f8d5dbd0001f5f930820754.png" data-original="//img1.sycdn.imooc.com/5f8d5dbd0001f5f930820754.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">图 2.3.4 React v16.3 版不同渲染流程组件调用调用生命周期函数的时机与方式</font></p>
+从 React v16.3 版本开始，React 建议使用`getDerivedStateFromProps`和`getSnapshotBeforeUpdate`两个生命周期函数替代`componentWillMount`，`componentWillReceiveProps`和`componentWillUpdate`三个生命周期函数。这里需要注意的是 **新增的两个生命周期函数和原有的三个生命周期函数必须分开使用，不能混合使用**。React v16.3 版本的组件生命周期函数整体调用逻辑见图 2.3.5。
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f8d5de10001e0bc16000876.jpg" data-original="//img1.sycdn.imooc.com/5f8d5de10001e0bc16000876.jpg" alt="图片描述"></p>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">图 2.3.5 React v16.3 版组件生命周期函数整体调用逻辑</font></p>
+现在我们对文章开头那个问题—对生命周期的理解进一步总结。
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 组件生命周期是指使用 class 定义的组件在整个应用程序运行过程中会经历<strong>首次渲染（挂载）</strong>，<strong>更新渲染</strong> 和 <strong>卸载</strong>三个过程。在不同的过程可以调用不同的生命周期函数。组件在首次渲染时会被实例化，然后调用实例上面的<code>componentWillMount</code>，<code>render</code>和<code>componentDidMount</code>函数。组件在更新渲染时可以调用<code>componentWillReceiveProps</code>，<code>shouldComponentUpdate</code>，<code>componentWillUpdate</code>，<code>render</code>和<code>componentDidUpdate</code>函数。组件在卸载时可以调用<code>componentWillUnmount</code>函数。React v16.3版本中将 <code>componentWillMount</code>，<code>componentWillReceiveProps</code>和<code>componentWillUpdate</code>标记为不安全的生命周期函数并不推荐使用，同时新增了<code>getDerivedStateFromProps</code>和<code>getSnapshotBeforeUpdate</code>函数用于代替它们。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>为什么 React v16 版的生命周期函数发生了变更呢？</strong> 下一节进行详细介绍。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2270">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            05 组件：从设计者的角度理解 React 组件
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2272">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            07 生命周期：为什么 React v16 产生了新的生命周期函数
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img2.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

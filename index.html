@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>18-剖析 React 内部运行机制/</title>
+    <style>* {
+  margin: 0;
+  padding: 0;
+  outline: 0;
+}
+
+body {
+  padding: 80px 100px;
+  font: 13px "Helvetica Neue", "Lucida Grande", "Arial";
+  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));
+  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);
+  background-repeat: no-repeat;
+  color: #555;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-size: 22px;
+  color: #343434;
+}
+h1 em, h2 em {
+  padding: 0 5px;
+  font-weight: normal;
+}
+h1 {
+  font-size: 60px;
+}
+h2 {
+  margin-top: 10px;
+}
+h3 {
+  margin: 5px 0 10px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  font-size: 18px;
+}
+ul li {
+  list-style: none;
+}
+ul li:hover {
+  cursor: pointer;
+  color: #2e2e2e;
+}
+ul li .path {
+  padding-left: 5px;
+  font-weight: bold;
+}
+ul li .line {
+  padding-right: 5px;
+  font-style: italic;
+}
+ul li:first-child .path {
+  padding-left: 0;
+}
+p {
+  line-height: 1.5;
+}
+a {
+  color: #555;
+  text-decoration: none;
+}
+a:hover {
+  color: #303030;
+}
+#stacktrace {
+  margin-top: 15px;
+}
+.directory h1 {
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+ul#files {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+ul#files li {
+  float: left;
+  width: 30%;
+  line-height: 25px;
+  margin: 1px;
+}
+ul#files li a {
+  display: block;
+  height: 25px;
+  border: 1px solid transparent;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+ul#files li a:focus,
+ul#files li a:hover {
+  background: rgba(255,255,255,0.65);
+  border: 1px solid #ececec;
+}
+ul#files li a.highlight {
+  -webkit-transition: background .4s ease-in-out;
+  background: #ffff4f;
+  border-color: #E9DC51;
+}
+#search {
+  display: block;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 90px;
+  -webkit-transition: width ease 0.2s, opacity ease 0.4s;
+  -moz-transition: width ease 0.2s, opacity ease 0.4s;
+  -webkit-border-radius: 32px;
+  -moz-border-radius: 32px;
+  -webkit-box-shadow: inset 0px 0px 3px rgba(0, 0, 0, 0.25), inset 0px 1px 3px rgba(0, 0, 0, 0.7), 0px 1px 0px rgba(255, 255, 255, 0.03);
+  -moz-box-shadow: inset 0px 0px 3px rgba(0, 0, 0, 0.25), inset 0px 1px 3px rgba(0, 0, 0, 0.7), 0px 1px 0px rgba(255, 255, 255, 0.03);
+  -webkit-font-smoothing: antialiased;
+  text-align: left;
+  font: 13px "Helvetica Neue", Arial, sans-serif;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  margin-bottom: 0;
+  outline: none;
+  opacity: 0.7;
+  color: #888;
+}
+#search:focus {
+  width: 120px;
+  opacity: 1.0; 
+}
+
+/*views*/
+#files span {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-indent: 10px;
+}
+#files .name {
+  background-repeat: no-repeat;
+}
+#files .icon .name {
+  text-indent: 28px;
+}
+
+/*tiles*/
+.view-tiles .name {
+  width: 100%;
+  background-position: 8px 5px;
+}
+.view-tiles .size,
+.view-tiles .date {
+  display: none;
+}
+
+/*details*/
+ul#files.view-details li {
+  float: none;
+  display: block;
+  width: 90%;
+}
+ul#files.view-details li.header {
+  height: 25px;
+  background: #000;
+  color: #fff;
+  font-weight: bold;
+}
+.view-details .header {
+  border-radius: 5px;
+}
+.view-details .name {
+  width: 60%;
+  background-position: 8px 5px;
+}
+.view-details .size {
+  width: 10%;
+}
+.view-details .date {
+  width: 30%;
+}
+.view-details .size,
+.view-details .date {
+  text-align: right;
+  direction: rtl;
+}
+
+/*mobile*/
+@media (max-width: 768px) {
+  body {
+    font-size: 13px;
+    line-height: 16px;
+    padding: 0;
+  }
+  #search {
+    position: static;
+    width: 100%;
+    font-size: 2em;
+    line-height: 1.8em;
+    text-indent: 10px;
+    border: 0;
+    border-radius: 0;
+    padding: 10px 0;
+    margin: 0;
+  }
+  #search:focus {
+    width: 100%;
+    border: 0;
+    opacity: 1;
+  }
+  .directory h1 {
+    font-size: 2em;
+    line-height: 1.5em;
+    color: #fff;
+    background: #000;
+    padding: 15px 10px;
+    margin: 0;
+  }
+  ul#files {
+    border-top: 1px solid #cacaca;
+  }
+  ul#files li {
+    float: none;
+    width: auto !important;
+    display: block;
+    border-bottom: 1px solid #cacaca;
+    font-size: 2em;
+    line-height: 1.2em;
+    text-indent: 0;
+    margin: 0;
+  }
+  ul#files li:nth-child(odd) {
+    background: #e0e0e0;
+  }
+  ul#files li a {
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    padding: 15px 10px;
+  }
+  ul#files li a:focus,
+  ul#files li a:hover {
+    border: 0;
+  }
+  #files .header,
+  #files .size,
+  #files .date {
+    display: none !important;
+  }
+  #files .name {
+    float: none;
+    display: inline-block;
+    width: 100%;
+    text-indent: 0;
+    background-position: 0 50%;
+  }
+  #files .icon .name {
+    text-indent: 41px;
+  }
+}
+#files .icon-directory .name {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAAWtQTFRFAAAA/PPQ9Nhc2q402qQ12qs2/PTX2pg12p81+/LM89NE9dto2q82+/fp2rM22qY39d6U+/bo2qo2/frx/vz32q812qs12qE279SU8c4w9NZP+/LK//367s9y7s925cp0/vzw9t92//342po2/vz25s1579B6+OSO2bQ0/v799NyT8tE79dld8Msm+OrC/vzx79KA2IYs7s6I9d6R4cJe9+OF/PLI/fry79OF/v30//328tWB89RJ8c9p8c0u9eCf//7+9txs6sts5Mdr+++5+u2z/vrv+/fq6cFz8dBs8tA57cpq+OaU9uGs27Y8//799NdX/PbY9uB89unJ//z14sNf+emh+emk+vDc+uys9+OL8dJy89NH+eic8tN5+OaV+OWR9N2n9dtl9t529+KF9+GB9Nue9NdU8tR/9t5y89qW9dpj89iO89eG/vvu2pQ12Y4z/vzy2Ict/vvv48dr/vzz4sNg///+2Igty3PqwQAAAAF0Uk5TAEDm2GYAAACtSURBVBjTY2AgA2iYlJWVhfohBPg0yx38y92dS0pKVOVBAqIi6sb2vsWWpfrFeTI8QAEhYQEta28nCwM1OVleZqCAmKCEkUdwYWmhQnFeOStQgL9cySqkNNDHVJGbiY0FKCCuYuYSGRsV5KgjxcXIARRQNncNj09JTgqw0ZbkZAcK5LuFJaRmZqfHeNnpSucDBQoiEtOycnIz4qI9bfUKQA6pKKqAgqIKQyK8BgAZ5yfODmnHrQAAAABJRU5ErkJggg==);
+}
+#files .icon-text-html .name {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHtSURBVDjLjZM9T9tQFIYpQ5eOMBKlW6eWIQipa8RfQKQghEAKqZgKFQgmFn5AWyVDCipVQZC2EqBWlEqdO2RCpAssQBRsx1+1ndix8wFvfW6wcUhQsfTI0j33PD7n+N4uAF2E+/S5RFwG/8Njl24/LyCIOI6j1+v1y0ajgU64cSSTybdBSVAwSMmmacKyLB/DMKBpGkRRZBJBEJBKpXyJl/yABLTBtm1Uq1X2JsrlMnRdhyRJTFCpVEAfSafTTUlQoFs1luxBAkoolUqQZbmtJTYTT/AoHInOfpcwtVtkwcSBgrkDGYph+60oisIq4Xm+VfB0+U/P0Lvj3NwPGfHPTcHMvoyFXwpe7UmQtAqTUCU0D1VVbwTPVk5jY19Fe3ZfQny7CE51WJDXqpjeEUHr45ki9rIqa4dmQiJfMLItGEs/FcQ2ucbRmdnSYy5vYWyLx/w3EaMfLmBaDpMQvuDJ65PY8Dpnz3wpYmLtApzcrIAqmfrEgdZH1grY/a36w6Xz0DKD8ES25/niYS6+wWE8mWfByY8cXmYEJFYLkHUHtVqNQcltAvoLD3v7o/FUHsNvzlnwxfsCEukC/ho3yUHaBN5Buo17Ojtyl+DqrnvQgUtfcC0ZcAdkUeA+ye7eMru9AUGIJPe4zh509UP/AAfNypi8oj/mAAAAAElFTkSuQmCC);
+}
+#files .icon-application-pdf .name {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHhSURBVDjLjZPLSxtRFIfVZRdWi0oFBf+BrhRx5dKVYKG4tLhRqlgXPmIVJQiC60JCCZYqFHQh7rrQlUK7aVUUfCBRG5RkJpNkkswrM5NEf73n6gxpHujAB/fOvefjnHM5VQCqCPa1MNoZnU/Qxqhx4woE7ZZlpXO53F0+n0c52Dl8Pt/nQkmhoJOCdUWBsvQJ2u4ODMOAwvapVAqSJHGJKIrw+/2uxAmuJgFdMDUVincSxvEBTNOEpmlIp9OIxWJckMlkoOs6AoHAg6RYYNs2kp4RqOvfuIACVFVFPB4vKYn3pFjAykDSOwVta52vqW6nlEQiwTMRBKGygIh9GEDCMwZH6EgoE+qHLMuVBdbfKwjv3yE6Ogjz/PQ/CZVDPSFRRYE4/RHy1y8wry8RGWGSqyC/nM1meX9IQpQV2JKIUH8vrEgYmeAFwuPDCHa9QehtD26HBhCZnYC8ucGzKSsIL8wgsjiH1PYPxL+vQvm5B/3sBMLyIm7GhhCe90BaWykV/Gp+VR9oqPVe9vfBTsruM1HtBKVPmFIUNusBrV3B4ev6bsbyXlPdkbr/u+StHUkxruBPY+0KY8f38oWX/byvNAdluHNLeOxDB+uyQQfPCWZ3NT69BYJWkjxjnB1o9Fv/ASQ5s+ABz8i2AAAAAElFTkSuQmCC);
+}
+</style>
+    <script>
+      function $(id){
+        var el = 'string' == typeof id
+          ? document.getElementById(id)
+          : id;
+
+        el.on = function(event, fn){
+          if ('content loaded' == event) {
+            event = window.attachEvent ? "load" : "DOMContentLoaded";
+          }
+          el.addEventListener
+            ? el.addEventListener(event, fn, false)
+            : el.attachEvent("on" + event, fn);
+        };
+
+        el.all = function(selector){
+          return $(el.querySelectorAll(selector));
+        };
+
+        el.each = function(fn){
+          for (var i = 0, len = el.length; i < len; ++i) {
+            fn($(el[i]), i);
+          }
+        };
+
+        el.getClasses = function(){
+          return this.getAttribute('class').split(/\s+/);
+        };
+
+        el.addClass = function(name){
+          var classes = this.getAttribute('class');
+          el.setAttribute('class', classes
+            ? classes + ' ' + name
+            : name);
+        };
+
+        el.removeClass = function(name){
+          var classes = this.getClasses().filter(function(curr){
+            return curr != name;
+          });
+          this.setAttribute('class', classes.join(' '));
+        };
+
+        return el;
+      }
+
+      function search() {
+        var str = $('search').value.toLowerCase();
+        var links = $('files').all('a');
+
+        links.each(function(link){
+          var text = link.textContent.toLowerCase();
+
+          if ('..' == text) return;
+          if (str.length && ~text.indexOf(str)) {
+            link.addClass('highlight');
+          } else {
+            link.removeClass('highlight');
+          }
+        });
+      }
+
+      $(window).on('content loaded', function(){
+        $('search').on('keyup', search);
+      });
+    </script>
+  </head>
+  <body class="directory">
+    <input id="search" type="text" placeholder="Search" autocomplete="off" />
+    <div id="wrapper">
+      <h1><a href="/">~</a> / <a href="/Dissect_the_internal_workings_of_React">18-剖析 React 内部运行机制</a> / </h1>
+      <ul id="files" class="view-tiles"><li><a href="/" class="icon icon-directory" title=".."><span class="name">..</span><span class="size"></span><span class="date"></span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/01%20%E5%BC%80%E7%AF%87%E8%AF%8D%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%A0%94%E7%A9%B6%20React%20%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E4%B8%8E%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="01 开篇词为什么要研究 React 内部运行机制与设计原理慕课专栏.html"><span class="name">01 开篇词为什么要研究 React 内部运行机制与设计原理慕课专栏.html</span><span class="size">19752</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/02%20%E7%A0%94%E7%A9%B6%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E8%A6%81%E6%89%BE%E5%88%B0%E5%88%87%E5%85%A5%E7%82%B9%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="02 研究 React 应用程序的内部运行机制要找到切入点慕课专栏.html"><span class="name">02 研究 React 应用程序的内部运行机制要找到切入点慕课专栏.html</span><span class="size">13853</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/03%20%E4%BD%A0%E5%AF%B9%20ReactDOM.render(%20...%20)%20%E6%93%8D%E4%BD%9C%E4%BA%86%E8%A7%A3%E5%A4%9A%E5%B0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="03 你对 ReactDOM.render( ... ) 操作了解多少慕课专栏.html"><span class="name">03 你对 ReactDOM.render( ... ) 操作了解多少慕课专栏.html</span><span class="size">21617</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/04%20React%20%E4%B8%96%E7%95%8C%E4%B8%AD%E9%82%A3%E4%BA%9B%E9%87%8D%E8%A6%81%E7%9A%84%E6%A6%82%E5%BF%B5%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="04 React 世界中那些重要的概念慕课专栏.html"><span class="name">04 React 世界中那些重要的概念慕课专栏.html</span><span class="size">11680</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/05%20%E7%BB%84%E4%BB%B6%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E7%BB%84%E4%BB%B6%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="05 组件从设计者的角度理解 React 组件慕课专栏.html"><span class="name">05 组件从设计者的角度理解 React 组件慕课专栏.html</span><span class="size">24943</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/06%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%20React%20%E7%BB%84%E4%BB%B6%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="06 生命周期如何理解 React 组件生命周期？慕课专栏.html"><span class="name">06 生命周期如何理解 React 组件生命周期？慕课专栏.html</span><span class="size">24180</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/07%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%BA%E4%BB%80%E4%B9%88%20React%20v16%20%E4%BA%A7%E7%94%9F%E4%BA%86%E6%96%B0%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%87%BD%E6%95%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="07 生命周期为什么 React v16 产生了新的生命周期函数慕课专栏.html"><span class="name">07 生命周期为什么 React v16 产生了新的生命周期函数慕课专栏.html</span><span class="size">25428</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/08%20%E7%BB%84%E4%BB%B6%E5%AE%9E%E4%BE%8B%E7%BB%84%E4%BB%B6%E5%AE%9E%E4%BE%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="08 组件实例组件实例到底是什么？慕课专栏.html"><span class="name">08 组件实例组件实例到底是什么？慕课专栏.html</span><span class="size">37016</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/09%20%E5%85%83%E7%B4%A0%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E5%85%83%E7%B4%A0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="09 元素从设计者的角度理解 React 元素慕课专栏.html"><span class="name">09 元素从设计者的角度理解 React 元素慕课专栏.html</span><span class="size">27340</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/10%20React%20%E5%A6%82%E4%BD%95%E5%AE%9A%E4%B9%89%E6%9B%B4%E6%96%B0%E9%98%9F%E5%88%97%E4%BB%A5%E5%8F%8A%E5%AE%83%E4%BB%AC%E4%B9%8B%E9%97%B4%E7%9A%84%E7%9B%B8%E4%BA%92%E4%BD%9C%E7%94%A8%E5%85%B3%E7%B3%BB%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="10 React 如何定义更新队列以及它们之间的相互作用关系？慕课专栏.html"><span class="name">10 React 如何定义更新队列以及它们之间的相互作用关系？慕课专栏.html</span><span class="size">41067</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/11%20%E4%BB%80%E4%B9%88%E6%98%AF%20React%20Fiber%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="11 什么是 React Fiber慕课专栏.html"><span class="name">11 什么是 React Fiber慕课专栏.html</span><span class="size">13090</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/12%20%E5%85%B3%E4%BA%8E%20React%20Fiber%E4%B8%8D%E5%BE%97%E4%B8%8D%E8%AF%B4%E7%9A%84%E4%BA%8B%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="12 关于 React Fiber不得不说的事慕课专栏.html"><span class="name">12 关于 React Fiber不得不说的事慕课专栏.html</span><span class="size">15559</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/13%20%E4%BA%86%E8%A7%A3%E5%9F%BA%E4%BA%8E%20React%20Fiber%20%E6%9E%B6%E6%9E%84%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%95%B4%E4%BD%93%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="13 了解基于 React Fiber 架构的应用程序整体渲染流程慕课专栏.html"><span class="name">13 了解基于 React Fiber 架构的应用程序整体渲染流程慕课专栏.html</span><span class="size">16427</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/14%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3React%20Fiber%20%E6%9E%B6%E6%9E%84%E7%9A%84%E4%B8%A4%E4%B8%AA%E6%A0%B8%E5%BF%83%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0FiberRootNode%E5%92%8CFiberNode%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode慕课专栏.html"><span class="name">14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode慕课专栏.html</span><span class="size">30363</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/15%20%E7%90%86%E8%A7%A3%20React%20Fiber%20%E6%9E%B6%E6%9E%84%E4%B8%AD%E4%B8%AD%E7%9A%84%20effectTag%20%E4%B8%8E%E4%BD%8D%E8%BF%90%E7%AE%97%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="15 理解 React Fiber 架构中中的 effectTag 与位运算慕课专栏.html"><span class="name">15 理解 React Fiber 架构中中的 effectTag 与位运算慕课专栏.html</span><span class="size">20811</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/16%20%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%20React%20%E4%B8%AD%E7%9A%84%E6%9B%B4%E6%96%B0%E4%B8%8E%E4%BB%BB%E5%8A%A1%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="16 如何理解 React 中的更新与任务慕课专栏.html"><span class="name">16 如何理解 React 中的更新与任务慕课专栏.html</span><span class="size">35727</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/17%20%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E4%B8%AD%E7%9A%84%E4%BB%BB%E5%8A%A1%E4%B8%8E%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="17 从设计者的角度理解 React 中的任务与任务队列慕课专栏.html"><span class="name">17 从设计者的角度理解 React 中的任务与任务队列慕课专栏.html</span><span class="size">23050</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/18%20React%20%E4%B8%AD%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E5%99%A8%EF%BC%88scheduler%EF%BC%89%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="18 React 中的任务调度器（scheduler）慕课专栏.html"><span class="name">18 React 中的任务调度器（scheduler）慕课专栏.html</span><span class="size">27925</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/19%20React%20Fiber%20%E7%BB%93%E7%82%B9%E7%9A%84%E6%9B%B4%E6%96%B0%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E8%A2%AB%E8%B0%83%E5%BA%A6%E5%99%A8%E6%89%A7%E8%A1%8C%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="19 React Fiber 结点的更新任务如何被调度器执行慕课专栏.html"><span class="name">19 React Fiber 结点的更新任务如何被调度器执行慕课专栏.html</span><span class="size">35653</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/20%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%A6%96%E6%AC%A1%E6%B8%B2%E6%9F%93%E6%97%B6%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="20 React 应用程序首次渲染时内部运行流程概述慕课专栏.html"><span class="name">20 React 应用程序首次渲染时内部运行流程概述慕课专栏.html</span><span class="size">22786</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/21%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%A6%96%E6%AC%A1%E6%B8%B2%E6%9F%93%E6%97%B6%20prerender%20%E9%98%B6%E6%AE%B5%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="21 React 应用程序首次渲染时 prerender 阶段的工作慕课专栏.html"><span class="name">21 React 应用程序首次渲染时 prerender 阶段的工作慕课专栏.html</span><span class="size">21278</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/22%20%E4%BB%80%E4%B9%88%E6%98%AF%20current%20%E6%A0%91%E5%92%8C%20workInProgress%20%E6%A0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="22 什么是 current 树和 workInProgress 树慕课专栏.html"><span class="name">22 什么是 current 树和 workInProgress 树慕课专栏.html</span><span class="size">14572</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/23%20React%20%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BA%20workInProgress%20%E6%A0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="23 React 如何构建 workInProgress 树慕课专栏.html"><span class="name">23 React 如何构建 workInProgress 树慕课专栏.html</span><span class="size">30017</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/24%20React%20%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E4%BB%A5%E5%8F%8A%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%AE%8C%E6%88%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="24 React 如何解析工作单元以及什么时候完成工作单元慕课专栏.html"><span class="name">24 React 如何解析工作单元以及什么时候完成工作单元慕课专栏.html</span><span class="size">37047</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/25%20%E5%AE%8C%E6%88%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E5%88%9B%E5%BB%BA%20DOM%20%E5%85%83%E7%B4%A0%E5%AE%9E%E4%BE%8B%E4%B8%8E%E6%94%B6%E9%9B%86%E5%89%AF%E4%BD%9C%E7%94%A8%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="25 完成工作单元创建 DOM 元素实例与收集副作用慕课专栏.html"><span class="name">25 完成工作单元创建 DOM 元素实例与收集副作用慕课专栏.html</span><span class="size">32912</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/26%20React%20%E5%A6%82%E4%BD%95%E5%B0%86%E5%89%AF%E4%BD%9C%E7%94%A8%E6%9B%B4%E6%96%B0%E5%88%B0%E5%B1%8F%E5%B9%95%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="26 React 如何将副作用更新到屏幕慕课专栏.html"><span class="name">26 React 如何将副作用更新到屏幕慕课专栏.html</span><span class="size">33827</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/27%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="27 React 应用程序更新渲染时内部运行流程概述慕课专栏.html"><span class="name">27 React 应用程序更新渲染时内部运行流程概述慕课专栏.html</span><span class="size">24665</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/28%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BA%20workInProgress%20%E6%A0%91%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="28 React 应用程序更新渲染时如何构建 workInProgress 树？慕课专栏.html"><span class="name">28 React 应用程序更新渲染时如何构建 workInProgress 树？慕课专栏.html</span><span class="size">49810</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/29%20React%20v16%20%E7%89%88%E7%9A%84%E5%8D%8F%E8%B0%83%E7%AE%97%E6%B3%95%E6%98%AF%E4%BB%80%E4%B9%88%E6%A0%B7%E7%9A%84%E5%91%A2%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="29 React v16 版的协调算法是什么样的呢？慕课专栏.html"><span class="name">29 React v16 版的协调算法是什么样的呢？慕课专栏.html</span><span class="size">55645</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/30%20%E9%80%9A%E8%BF%87%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E7%9A%84%E5%89%AF%E4%BD%9C%E7%94%A8%E5%88%97%E8%A1%A8%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.html" class="icon icon icon-html icon-text-html" title="30 通过实例分析应用程序更新渲染时的副作用列表慕课专栏.html"><span class="name">30 通过实例分析应用程序更新渲染时的副作用列表慕课专栏.html</span><span class="size">22877</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/01%20%E5%BC%80%E7%AF%87%E8%AF%8D%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%A0%94%E7%A9%B6%20React%20%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E4%B8%8E%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="01 开篇词为什么要研究 React 内部运行机制与设计原理慕课专栏.pdf"><span class="name">01 开篇词为什么要研究 React 内部运行机制与设计原理慕课专栏.pdf</span><span class="size">199669</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/02%20%E7%A0%94%E7%A9%B6%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E8%A6%81%E6%89%BE%E5%88%B0%E5%88%87%E5%85%A5%E7%82%B9%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="02 研究 React 应用程序的内部运行机制要找到切入点慕课专栏.pdf"><span class="name">02 研究 React 应用程序的内部运行机制要找到切入点慕课专栏.pdf</span><span class="size">573668</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/03%20%E4%BD%A0%E5%AF%B9%20ReactDOM.render(%20...%20)%20%E6%93%8D%E4%BD%9C%E4%BA%86%E8%A7%A3%E5%A4%9A%E5%B0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="03 你对 ReactDOM.render( ... ) 操作了解多少慕课专栏.pdf"><span class="name">03 你对 ReactDOM.render( ... ) 操作了解多少慕课专栏.pdf</span><span class="size">191978</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/04%20React%20%E4%B8%96%E7%95%8C%E4%B8%AD%E9%82%A3%E4%BA%9B%E9%87%8D%E8%A6%81%E7%9A%84%E6%A6%82%E5%BF%B5%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="04 React 世界中那些重要的概念慕课专栏.pdf"><span class="name">04 React 世界中那些重要的概念慕课专栏.pdf</span><span class="size">174544</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/05%20%E7%BB%84%E4%BB%B6%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E7%BB%84%E4%BB%B6%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="05 组件从设计者的角度理解 React 组件慕课专栏.pdf"><span class="name">05 组件从设计者的角度理解 React 组件慕课专栏.pdf</span><span class="size">153380</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/06%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%20React%20%E7%BB%84%E4%BB%B6%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="06 生命周期如何理解 React 组件生命周期？慕课专栏.pdf"><span class="name">06 生命周期如何理解 React 组件生命周期？慕课专栏.pdf</span><span class="size">831454</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/07%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%BA%E4%BB%80%E4%B9%88%20React%20v16%20%E4%BA%A7%E7%94%9F%E4%BA%86%E6%96%B0%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%87%BD%E6%95%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="07 生命周期为什么 React v16 产生了新的生命周期函数慕课专栏.pdf"><span class="name">07 生命周期为什么 React v16 产生了新的生命周期函数慕课专栏.pdf</span><span class="size">142724</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/08%20%E7%BB%84%E4%BB%B6%E5%AE%9E%E4%BE%8B%E7%BB%84%E4%BB%B6%E5%AE%9E%E4%BE%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="08 组件实例组件实例到底是什么？慕课专栏.pdf"><span class="name">08 组件实例组件实例到底是什么？慕课专栏.pdf</span><span class="size">265526</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/09%20%E5%85%83%E7%B4%A0%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E5%85%83%E7%B4%A0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="09 元素从设计者的角度理解 React 元素慕课专栏.pdf"><span class="name">09 元素从设计者的角度理解 React 元素慕课专栏.pdf</span><span class="size">175328</span><span class="date">2020/11/1 下午5:26:08</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/10%20React%20%E5%A6%82%E4%BD%95%E5%AE%9A%E4%B9%89%E6%9B%B4%E6%96%B0%E9%98%9F%E5%88%97%E4%BB%A5%E5%8F%8A%E5%AE%83%E4%BB%AC%E4%B9%8B%E9%97%B4%E7%9A%84%E7%9B%B8%E4%BA%92%E4%BD%9C%E7%94%A8%E5%85%B3%E7%B3%BB%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="10 React 如何定义更新队列以及它们之间的相互作用关系？慕课专栏.pdf"><span class="name">10 React 如何定义更新队列以及它们之间的相互作用关系？慕课专栏.pdf</span><span class="size">247010</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/11%20%E4%BB%80%E4%B9%88%E6%98%AF%20React%20Fiber%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="11 什么是 React Fiber慕课专栏.pdf"><span class="name">11 什么是 React Fiber慕课专栏.pdf</span><span class="size">292147</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/12%20%E5%85%B3%E4%BA%8E%20React%20Fiber%E4%B8%8D%E5%BE%97%E4%B8%8D%E8%AF%B4%E7%9A%84%E4%BA%8B%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="12 关于 React Fiber不得不说的事慕课专栏.pdf"><span class="name">12 关于 React Fiber不得不说的事慕课专栏.pdf</span><span class="size">329279</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/13%20%E4%BA%86%E8%A7%A3%E5%9F%BA%E4%BA%8E%20React%20Fiber%20%E6%9E%B6%E6%9E%84%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%95%B4%E4%BD%93%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="13 了解基于 React Fiber 架构的应用程序整体渲染流程慕课专栏.pdf"><span class="name">13 了解基于 React Fiber 架构的应用程序整体渲染流程慕课专栏.pdf</span><span class="size">721216</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/14%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3React%20Fiber%20%E6%9E%B6%E6%9E%84%E7%9A%84%E4%B8%A4%E4%B8%AA%E6%A0%B8%E5%BF%83%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0FiberRootNode%E5%92%8CFiberNode%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode慕课专栏.pdf"><span class="name">14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode慕课专栏.pdf</span><span class="size">338560</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/15%20%E7%90%86%E8%A7%A3%20React%20Fiber%20%E6%9E%B6%E6%9E%84%E4%B8%AD%E4%B8%AD%E7%9A%84%20effectTag%20%E4%B8%8E%E4%BD%8D%E8%BF%90%E7%AE%97%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="15 理解 React Fiber 架构中中的 effectTag 与位运算慕课专栏.pdf"><span class="name">15 理解 React Fiber 架构中中的 effectTag 与位运算慕课专栏.pdf</span><span class="size">215154</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/16%20%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%20React%20%E4%B8%AD%E7%9A%84%E6%9B%B4%E6%96%B0%E4%B8%8E%E4%BB%BB%E5%8A%A1%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="16 如何理解 React 中的更新与任务慕课专栏.pdf"><span class="name">16 如何理解 React 中的更新与任务慕课专栏.pdf</span><span class="size">176314</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/17%20%E4%BB%8E%E8%AE%BE%E8%AE%A1%E8%80%85%E7%9A%84%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%20React%20%E4%B8%AD%E7%9A%84%E4%BB%BB%E5%8A%A1%E4%B8%8E%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="17 从设计者的角度理解 React 中的任务与任务队列慕课专栏.pdf"><span class="name">17 从设计者的角度理解 React 中的任务与任务队列慕课专栏.pdf</span><span class="size">1121768</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/18%20React%20%E4%B8%AD%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E5%99%A8%EF%BC%88scheduler%EF%BC%89%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="18 React 中的任务调度器（scheduler）慕课专栏.pdf"><span class="name">18 React 中的任务调度器（scheduler）慕课专栏.pdf</span><span class="size">746614</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/19%20React%20Fiber%20%E7%BB%93%E7%82%B9%E7%9A%84%E6%9B%B4%E6%96%B0%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E8%A2%AB%E8%B0%83%E5%BA%A6%E5%99%A8%E6%89%A7%E8%A1%8C%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="19 React Fiber 结点的更新任务如何被调度器执行慕课专栏.pdf"><span class="name">19 React Fiber 结点的更新任务如何被调度器执行慕课专栏.pdf</span><span class="size">351960</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/20%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%A6%96%E6%AC%A1%E6%B8%B2%E6%9F%93%E6%97%B6%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="20 React 应用程序首次渲染时内部运行流程概述慕课专栏.pdf"><span class="name">20 React 应用程序首次渲染时内部运行流程概述慕课专栏.pdf</span><span class="size">246286</span><span class="date">2020/11/1 下午5:26:10</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/21%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%A6%96%E6%AC%A1%E6%B8%B2%E6%9F%93%E6%97%B6%20prerender%20%E9%98%B6%E6%AE%B5%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="21 React 应用程序首次渲染时 prerender 阶段的工作慕课专栏.pdf"><span class="name">21 React 应用程序首次渲染时 prerender 阶段的工作慕课专栏.pdf</span><span class="size">275161</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/22%20%E4%BB%80%E4%B9%88%E6%98%AF%20current%20%E6%A0%91%E5%92%8C%20workInProgress%20%E6%A0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="22 什么是 current 树和 workInProgress 树慕课专栏.pdf"><span class="name">22 什么是 current 树和 workInProgress 树慕课专栏.pdf</span><span class="size">344223</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/23%20React%20%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BA%20workInProgress%20%E6%A0%91%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="23 React 如何构建 workInProgress 树慕课专栏.pdf"><span class="name">23 React 如何构建 workInProgress 树慕课专栏.pdf</span><span class="size">373260</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/24%20React%20%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E4%BB%A5%E5%8F%8A%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%AE%8C%E6%88%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="24 React 如何解析工作单元以及什么时候完成工作单元慕课专栏.pdf"><span class="name">24 React 如何解析工作单元以及什么时候完成工作单元慕课专栏.pdf</span><span class="size">214913</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/25%20%E5%AE%8C%E6%88%90%E5%B7%A5%E4%BD%9C%E5%8D%95%E5%85%83%E5%88%9B%E5%BB%BA%20DOM%20%E5%85%83%E7%B4%A0%E5%AE%9E%E4%BE%8B%E4%B8%8E%E6%94%B6%E9%9B%86%E5%89%AF%E4%BD%9C%E7%94%A8%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="25 完成工作单元创建 DOM 元素实例与收集副作用慕课专栏.pdf"><span class="name">25 完成工作单元创建 DOM 元素实例与收集副作用慕课专栏.pdf</span><span class="size">1926625</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/26%20React%20%E5%A6%82%E4%BD%95%E5%B0%86%E5%89%AF%E4%BD%9C%E7%94%A8%E6%9B%B4%E6%96%B0%E5%88%B0%E5%B1%8F%E5%B9%95%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="26 React 如何将副作用更新到屏幕慕课专栏.pdf"><span class="name">26 React 如何将副作用更新到屏幕慕课专栏.pdf</span><span class="size">1498579</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/27%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E5%86%85%E9%83%A8%E8%BF%90%E8%A1%8C%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="27 React 应用程序更新渲染时内部运行流程概述慕课专栏.pdf"><span class="name">27 React 应用程序更新渲染时内部运行流程概述慕课专栏.pdf</span><span class="size">1730034</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/28%20React%20%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BA%20workInProgress%20%E6%A0%91%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="28 React 应用程序更新渲染时如何构建 workInProgress 树？慕课专栏.pdf"><span class="name">28 React 应用程序更新渲染时如何构建 workInProgress 树？慕课专栏.pdf</span><span class="size">1399411</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/29%20React%20v16%20%E7%89%88%E7%9A%84%E5%8D%8F%E8%B0%83%E7%AE%97%E6%B3%95%E6%98%AF%E4%BB%80%E4%B9%88%E6%A0%B7%E7%9A%84%E5%91%A2%EF%BC%9F%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="29 React v16 版的协调算法是什么样的呢？慕课专栏.pdf"><span class="name">29 React v16 版的协调算法是什么样的呢？慕课专栏.pdf</span><span class="size">261568</span><span class="date">2020/11/1 下午5:26:12</span></a></li>
+<li><a href="/Dissect_the_internal_workings_of_React/30%20%E9%80%9A%E8%BF%87%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9B%B4%E6%96%B0%E6%B8%B2%E6%9F%93%E6%97%B6%E7%9A%84%E5%89%AF%E4%BD%9C%E7%94%A8%E5%88%97%E8%A1%A8%E6%85%95%E8%AF%BE%E4%B8%93%E6%A0%8F.pdf" class="icon icon icon-pdf icon-application-pdf" title="30 通过实例分析应用程序更新渲染时的副作用列表慕课专栏.pdf"><span class="name">30 通过实例分析应用程序更新渲染时的副作用列表慕课专栏.pdf</span><span class="size">377192</span><span class="date">2020/11/1 下午5:26:12</span></a></li></ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,431 @@
+<html><head><meta charset="utf-8"><title>29 React v16 版的协调算法是什么样的呢？-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        29 React v16 版的协调算法是什么样的呢？
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-10-12 10:38:03
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img2.sycdn.imooc.com/5f72941f0001e30606400409.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">读书给人以快乐、给人以光彩、给人以才干。——培根<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">无论是应用程序首次渲染还是更新渲染，在解析工作单元的时候 React 均需要执行「协调」算法以获取下一个 Fiber 结点。那么 React 中的「协调」算法到底是什么样的呢？本节将会主要介绍 React Fiber 架构下「协调」算法的核心逻辑。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在 React v16 版中，「协调」算法的代码在一个独立的包（react-reconciler）里面。React 官方将该算法独立成包的目的是为了能够让第三方可以直接使用该算法，并且提供了对应的 Api，见代码示例 6.3.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">const</span> Reconciler <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-reconciler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> HostConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 需要在这里实现以下方法</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> MyRenderer <span class="token operator">=</span> <span class="token function">Reconciler</span><span class="token punctuation">(</span>HostConfig<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> RendererPublicAPI <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> container<span class="token punctuation">,</span> callback<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 调用MyRenderer.updateContainer()执行根结点的更新。</span>
+    <span class="token comment">// 可以参考ReactDOM, React Native, 以及 React ART等示例。</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> RendererPublicAPI<span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.1 独立使用 react-reconciler 包</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">下面，我们来看一下协调算法在 React 应用程序是如何工作的。</p>
+</div><div class="cl-preview-section"><h2 id="协调（reconcile）的核心逻辑" style="font-size: 30px;">协调（reconcile）的核心逻辑</h2>
+</div><div class="cl-preview-section"><h3 id="什么是「协调」？">什么是「协调」？</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在前面章节中已经提到了「协调」逻辑，应用程序执行到 render 阶段构建 workInProgress 树的过程中，每一次工作循环的目的—获取下一个 Fiber 结点的工作都是经过「协调」处理 React 元素来完成。<strong>需要注意的是，工作循环的主要任务就是处理当前 Fiber 结点然后返回下一个 Fiber 结点，在这个过程中也会完成结点 diff 处理</strong>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">个人认为 React 的协调过程不单单由一个算法完成，而是有众多判断逻辑以及独立的子算法共同完成。</p>
+</div><div class="cl-preview-section"><h3 id="协调的前置工作-—-对不同类型的-fiber-结点分别解析以获得其子元素">协调的前置工作 — 对不同类型的 Fiber 结点分别解析以获得其子元素</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">这个逻辑是开始工作单元解析时，在<code>beginWork</code>函数中根据当前 Fiber 结点的类型分别调用各自的解析函数，见代码示例 6.3.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberBeginWork.js</span>
+<span class="token keyword">function</span> <span class="token function">beginWork</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>workInProgress<span class="token punctuation">.</span>tag<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">case</span> IndeterminateComponent<span class="token punctuation">:</span>
+      	<span class="token comment">// ...</span>
+      <span class="token keyword">case</span> ClassComponent<span class="token punctuation">:</span>
+      	<span class="token comment">// 解析ClassComponent类型的Fiber结点</span>
+      	<span class="token keyword">return</span> <span class="token function">updateClassComponent</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> <span class="token operator">...</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> HostRoot<span class="token punctuation">:</span>
+        <span class="token comment">// 解析HostRoot类型的Fiber结点</span>
+      	<span class="token keyword">return</span> <span class="token function">updateHostRoot</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> HostComponent<span class="token punctuation">:</span>
+      	<span class="token comment">// 解析HostComponent类型的Fiber结点</span>
+      	<span class="token keyword">return</span> <span class="token function">updateHostComponent</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    	<span class="token keyword">case</span> HostText<span class="token punctuation">:</span>
+      	<span class="token comment">// 解析HostComponent类型的Fiber结点</span>
+      	<span class="token keyword">return</span> <span class="token function">updateHostText</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.2 beginWork 函数开启工作单元解析</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>updateClassComponent</code>函数、<code>updateHostRoot</code>函数、<code>updateHostComponent</code>函数和<code>updateHostText</code>函数分别用于解析<code>ClassComponent</code>、<code>HostRoot</code>、<code>HostComponent</code>和<code>HostText</code>类型的 Fiber 结点。这个过程中首先获取当前 Fiber 结点的子元素，然后将子元素传入<code>reconcileChildren</code>函数获取下一个 Fiber 结点，逻辑流程见图 6.3.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f7293a3000116bf10120577.png" data-original="//img1.sycdn.imooc.com/5f7293a3000116bf10120577.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 6.3.1 解析工作单元获取子元素</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在解析工作单元时，React 需要获得当前 Fiber 结点的子元素并传入到<code>reconcileChildren</code>函数中，<code>reconcileChildren</code>函数根据传入的元素返回下一个 Fiber 结点。如果将获取子元素作为整个「协调」算法执行的前置工作，那么获取下一个 Fiber 结点则是「协调」算法执行的最终目标。</p>
+</div><div class="cl-preview-section"><h3 id="协调的最终目标-—-获得下一个-fiber-结点">协调的最终目标 — 获得下一个 Fiber 结点</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>reconcileChildren</code>函数实际上调用的是<code>reconcileChildFibers</code>函数，该函数是协调元素的入口函数，见代码示例 6.3.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactChildFiber.js</span>
+<span class="token keyword">function</span> <span class="token function">reconcileChildFibers</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> newChild<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token operator">...</span>
+  <span class="token comment">// 获取当前传入（react）元素的类型</span>
+  <span class="token keyword">var</span> isObject <span class="token operator">=</span> <span class="token keyword">typeof</span> newChild <span class="token operator">===</span> <span class="token string">'object'</span> <span class="token operator">&amp;&amp;</span> newChild <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 如果当前元素是类型是对象，比如intance.render的返回值就是元素对象</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>isObject<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> <span class="token punctuation">(</span>newChild<span class="token punctuation">.</span>$$<span class="token keyword">typeof</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">case</span> REACT_ELEMENT_TYPE<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">placeSingleChild</span><span class="token punctuation">(</span><span class="token function">reconcileSingleElement</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> newChild<span class="token punctuation">,</span> <span class="token operator">...</span> <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> REACT_PORTAL_TYPE<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">placeSingleChild</span><span class="token punctuation">(</span><span class="token function">reconcileSinglePortal</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> newChild<span class="token punctuation">,</span> <span class="token operator">...</span> <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+	<span class="token comment">// 如果当前元素的类型是字符串和数字，说明其值应该是文本</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> newChild <span class="token operator">===</span> <span class="token string">'string'</span> <span class="token operator">||</span> <span class="token keyword">typeof</span> newChild <span class="token operator">===</span> <span class="token string">'number'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">placeSingleChild</span><span class="token punctuation">(</span><span class="token function">reconcileSingleTextNode</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> <span class="token string">''</span> <span class="token operator">+</span> newChild<span class="token punctuation">,</span> <span class="token operator">...</span> <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+	<span class="token comment">// 如果当前元素的类型是数组，比如一个div内部有多个子元素</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isArray</span><span class="token punctuation">(</span>newChild<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">reconcileChildrenArray</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> newChild<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.3 reconcileChildFibers 函数根据元素类型分别处理</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>reconcileChildFibers</code>函数内部会根据传入的元素类型分别调用对应的处理函数，比如<code>reconcileSingleElement</code>函数、<code>reconcileSinglePortal</code>函数和<code>reconcileSingleTextNode</code>函数分别用于 <strong>协调</strong> 单个<code>element</code>、<code>portal</code>和<code>text</code>数据类型的元素并 <strong>返回新的 Fiber 结点</strong>。那么，这里的 <strong>协调（reconcile）具体做了哪些事情呢？</strong></p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：Portal 提供了一种将子节点渲染到存在于父组件以外的 DOM 节点的优秀方案，有兴趣的同学可自行深入了解。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h4 id="协调单个-element-类型的元素" style="font-size: 26px;">协调单个 element 类型的元素</h4>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>reconcileSingleElement</code>函数用于协调单个 element 的结点，见代码示例 6.3.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactChildFiber.js</span>
+<span class="token keyword">function</span> <span class="token function">reconcileSingleElement</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> element<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> key <span class="token operator">=</span> element<span class="token punctuation">.</span>key<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> child <span class="token operator">=</span> currentFirstChild<span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>child<span class="token punctuation">.</span>key <span class="token operator">===</span> key<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果key相等，说明这个结点不需要直接删除并且可以复用</span>
+    <span class="token keyword">var</span> existing <span class="token operator">=</span> <span class="token function">useFiber</span><span class="token punctuation">(</span>child<span class="token punctuation">,</span> element<span class="token punctuation">.</span>type <span class="token operator">===</span> REACT_FRAGMENT_TYPE <span class="token operator">?</span> element<span class="token punctuation">.</span>props<span class="token punctuation">.</span>children <span class="token punctuation">:</span> element<span class="token punctuation">.</span>props<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    existing<span class="token punctuation">.</span>ref <span class="token operator">=</span> <span class="token function">coerceRef</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> child<span class="token punctuation">,</span> element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    existing<span class="token punctuation">.</span><span class="token keyword">return</span> <span class="token operator">=</span> returnFiber<span class="token punctuation">;</span>
+    <span class="token comment">// 返回复用的Fiber结点</span>
+    <span class="token keyword">return</span> existing<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果key不相等则从父结点上把该结点删掉</span>
+    <span class="token function">deleteChild</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> child<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token operator">...</span>
+  <span class="token comment">// 如果key不相等</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>element<span class="token punctuation">.</span>type <span class="token operator">===</span> REACT_FRAGMENT_TYPE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> created <span class="token operator">=</span> <span class="token function">createFiberFromFragment</span><span class="token punctuation">(</span>element<span class="token punctuation">.</span>props<span class="token punctuation">.</span>children<span class="token punctuation">,</span> returnFiber<span class="token punctuation">.</span>mode<span class="token punctuation">,</span> expirationTime<span class="token punctuation">,</span> element<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    created<span class="token punctuation">.</span><span class="token keyword">return</span> <span class="token operator">=</span> returnFiber<span class="token punctuation">;</span>
+    <span class="token comment">// 返回新建的Fiber结点</span>
+    <span class="token keyword">return</span> created<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> _created4 <span class="token operator">=</span> <span class="token function">createFiberFromElement</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> returnFiber<span class="token punctuation">.</span>mode<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    _created4<span class="token punctuation">.</span>ref <span class="token operator">=</span> <span class="token function">coerceRef</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    _created4<span class="token punctuation">.</span><span class="token keyword">return</span> <span class="token operator">=</span> returnFiber<span class="token punctuation">;</span>
+    <span class="token comment">// 返回新建的Fiber结点</span>
+    <span class="token keyword">return</span> _created4<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.4 协调单个 element 类型的元素</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>reconcileSingleElement</code>函数中的参数解析如下：</p>
+</div><div class="cl-preview-section"><ul>
+<li style="font-size: 20px; line-height: 38px;"><code>returnFiber</code>指向当前 Fiber 结点的父结点。</li>
+<li style="font-size: 20px; line-height: 38px;"><code>currentFirstChild</code>指向的是当前的 Fiber 结点。</li>
+<li style="font-size: 20px; line-height: 38px;"><code>element</code>指向的是当前 Fiber 结点经过<code>setState( ... )</code>操作后产生的的新的元素。</li>
+</ul>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>协调过程中坚持的原则就是能复用尽量复用</strong>，协调单个元素的主要依据就是先判断结点的<code>key</code>是否发生变化，如果没变则选择复用当前的 Fiber 结点并返回，否则创建新的的结点并返回。这里需要注意的是，复用结点并不代表不改变旧的结点，React 会将<code>element.props</code>更新到复用的结点中。</p>
+</div><div class="cl-preview-section"><h4 id="协调单个-text-类型的元素" style="font-size: 26px;">协调单个 text 类型的元素</h4>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">基本原理同调和单个 element 类型的元素。</p>
+</div><div class="cl-preview-section"><h4 id="协调-array-类型的元素" style="font-size: 26px;">协调 array 类型的元素</h4>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">协调 array 类型的元素的逻辑要比协调单个 element 和 text 类型的结点复杂一些，<code>reconcileChildrenArray</code>函数用于协调数组的结点，见代码示例 6.3.5。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：代码示例 6.3.5 代码量较大，理解起来少有困难，建议结合下面的图片解释进行理解。</p>
+</blockquote>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactChildFiber.js</span>
+<span class="token keyword">function</span> <span class="token function">reconcileChildrenArray</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> currentFirstChild<span class="token punctuation">,</span> newChildren<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">var</span> resultingFirstChild <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> previousNewFiber <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> oldFiber <span class="token operator">=</span> currentFirstChild<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> newIdx <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> nextOldFiber <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// case1：本次循环主要是检查更新渲染时，新的元素length相对于旧的Fiber链表长度是否相同或者增加</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span> oldFiber <span class="token operator">!==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> newIdx <span class="token operator">&lt;</span> newChildren<span class="token punctuation">.</span>length<span class="token punctuation">;</span> newIdx<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>oldFiber<span class="token punctuation">.</span>index <span class="token operator">&gt;</span> newIdx<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      nextOldFiber <span class="token operator">=</span> oldFiber<span class="token punctuation">;</span>
+      oldFiber <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 将结点链表的指针指向下一个Fiber</span>
+      nextOldFiber <span class="token operator">=</span> oldFiber<span class="token punctuation">.</span>sibling<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// updateSlot函数用于复用旧的结点并将新的props更新进去</span>
+    <span class="token keyword">var</span> newFiber <span class="token operator">=</span> <span class="token function">updateSlot</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> oldFiber<span class="token punctuation">,</span> newChildren<span class="token punctuation">[</span>newIdx<span class="token punctuation">]</span><span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 如果新创建的Fiber结点为null并且旧结点也为null，则直接退出循环</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>newFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>oldFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        oldFiber <span class="token operator">=</span> nextOldFiber<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// ...</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>previousNewFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 设置用于返回的Fiber结点</span>
+      resultingFirstChild <span class="token operator">=</span> newFiber<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 兄弟结点通过sibling属性链接起来</span>
+      previousNewFiber<span class="token punctuation">.</span>sibling <span class="token operator">=</span> newFiber<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    previousNewFiber <span class="token operator">=</span> newFiber<span class="token punctuation">;</span>
+    oldFiber <span class="token operator">=</span> nextOldFiber<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 执行到这里说明链表长度和新的元素length相同，即双边完成 diff 处理</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>newIdx <span class="token operator">===</span> newChildren<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 返回链表中的第一个Fiber结点，此时的Fiber结点已经更新了对应的props</span>
+    <span class="token keyword">return</span> resultingFirstChild<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// case2：oldFiber为null说明是首次渲染，那么我们需要将根据数组结构的元素生成链表结构的Fiber链</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>oldFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 逐个遍历数组元素，然后根据每个元素创建Fiber结点</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span> newIdx <span class="token operator">&lt;</span> newChildren<span class="token punctuation">.</span>length<span class="token punctuation">;</span> newIdx<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">var</span> _newFiber <span class="token operator">=</span> <span class="token function">createChild</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> newChildren<span class="token punctuation">[</span>newIdx<span class="token punctuation">]</span><span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>_newFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">continue</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      lastPlacedIndex <span class="token operator">=</span> <span class="token function">placeChild</span><span class="token punctuation">(</span>_newFiber<span class="token punctuation">,</span> lastPlacedIndex<span class="token punctuation">,</span> newIdx<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>previousNewFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 设置用于返回的Fiber结点</span>
+        resultingFirstChild <span class="token operator">=</span> _newFiber<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 兄弟结点通过sibling属性链接起来</span>
+        previousNewFiber<span class="token punctuation">.</span>sibling <span class="token operator">=</span> _newFiber<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      previousNewFiber <span class="token operator">=</span> _newFiber<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// 返回下一个Fiber结点</span>
+    <span class="token keyword">return</span> resultingFirstChild<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 为了方便查找把所有的child重组为map结构</span>
+  <span class="token keyword">var</span> existingChildren <span class="token operator">=</span> <span class="token function">mapRemainingChildren</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> oldFiber<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// case3：执行到这里说明前面两种case不成立，这是由于新的元素数组length发生了变化导致</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span> newIdx <span class="token operator">&lt;</span> newChildren<span class="token punctuation">.</span>length<span class="token punctuation">;</span> newIdx<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 创建Fiber结点</span>
+    <span class="token keyword">var</span> _newFiber2 <span class="token operator">=</span> <span class="token function">updateFromMap</span><span class="token punctuation">(</span>existingChildren<span class="token punctuation">,</span> returnFiber<span class="token punctuation">,</span> newIdx<span class="token punctuation">,</span> newChildren<span class="token punctuation">[</span>newIdx<span class="token punctuation">]</span><span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_newFiber2 <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ...</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>previousNewFiber <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 将刚创建的Fiber结点设置为返回结点</span>
+        resultingFirstChild <span class="token operator">=</span> _newFiber2<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token comment">// 兄弟结点通过sibling属性链接起来</span>
+        previousNewFiber<span class="token punctuation">.</span>sibling <span class="token operator">=</span> _newFiber2<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      previousNewFiber <span class="token operator">=</span> _newFiber2<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 返回下一个Fiber结点</span>
+  <span class="token keyword">return</span> resultingFirstChild<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.5 协调数组类型的元素</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>reconcileChildrenArray</code>函数在协调数组元素时，要考虑的情况主要有三种，分别是：</p>
+</div><div class="cl-preview-section"><ol>
+<li style="font-size: 20px; line-height: 38px;">应用程序首次渲染时（对应代码注释中的 case2），这时<code>oldFiber</code>为<code>null</code>，React 需要为数组中的每一个元素创建一个 Fiber 结点，并将这些结点通过<code>sibling</code>链接起来。</li>
+<li style="font-size: 20px; line-height: 38px;">应用程序更新渲染时（对应代码注释中的 case1）新的元素数组的长度没有发生变化或者长度增加，这时 React 将链表中的 Fiber 结点与新的数组中的每一个元素按照协调单个元素的逻辑进行处理，见图 6.3.2。</li>
+</ol>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f7293d30001d75108920232.png" data-original="//img1.sycdn.imooc.com/5f7293d30001d75108920232.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 6.3.2 现有 Fiber 链表和新的 element 数组长度相同时两者的结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">如果新的 element 数组长度相对于旧的 Fiber 链表长度变大了怎么办呢？见代码示例 6.3.6。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">UpdateCounter</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span><span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>state <span class="token operator">=</span> <span class="token punctuation">{</span>
+			count<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+			text<span class="token punctuation">:</span> <span class="token string">'点击计数'</span>
+		<span class="token punctuation">}</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>handleClick <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>handleClick<span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+  
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+			count<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>count <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token punctuation">(</span>
+			<span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"wrap-box"</span><span class="token operator">&gt;</span>
+				<span class="token punctuation">{</span>
+      		<span class="token comment">// 根据count控制该元素显示或隐藏</span>
+					<span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>count <span class="token operator">&gt;</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>
+						<span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"title-text"</span><span class="token operator">&gt;</span>
+							<span class="token operator">&lt;</span>span<span class="token operator">&gt;</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>text<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">&gt;</span>
+						<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+					<span class="token punctuation">)</span>
+				<span class="token punctuation">}</span>
+				<span class="token operator">&lt;</span>button key<span class="token operator">=</span><span class="token string">"1"</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>handleClick<span class="token punctuation">}</span><span class="token operator">&gt;</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>text<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+				<span class="token operator">&lt;</span>span key<span class="token operator">=</span><span class="token string">"2"</span> id<span class="token operator">=</span><span class="token string">"spanText"</span> className<span class="token operator">=</span><span class="token string">"span-text"</span><span class="token operator">&gt;</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>count<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">&gt;</span>
+			<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+		<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.3.6 新的数组元素增多时的情况</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">代码示例 6.3.6 对应的 Fiber 链表结构与 新的 element 数组结构见图 6.3.3。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f7293e60001076308920232.png" data-original="//img1.sycdn.imooc.com/5f7293e60001076308920232.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 6.3.3 新的数组元素增多时 Fiber 和 element 数据结构</font></center>
+</div><div class="cl-preview-section"><ol start="3">
+<li style="font-size: 20px; line-height: 38px;">应用程序更新渲染时（对应代码注释中的 case3）新的元素数组的长度相对于旧的 Fiber 链表长度变小，如将代码示例 6.3.6 中的控制元素显示的条件改为<code>this.state.count === 0</code>。这时 React 依然将链表中的 Fiber 结点与新的数组中的每一个元素按照协调单个元素的逻辑进行处理，但是数组元素的值却发生了变化，见图 6.3.4。</li>
+</ol>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f7293f700019cb208920232.png" data-original="//img1.sycdn.imooc.com/5f7293f700019cb208920232.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 6.3.4 新的数组元素减少时 Fiber 和 element 数据结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">当新的 element 元素数组的长度相对于旧的 Fiber 链表长度变小，说明应用程序删除了某元素。此时 React 会找到元素之前在数组中的索引位置，然后将其值设置为<code>false</code>，然后将其对应的 Fiber 结点的 effectTag 标记为 <code>Deletion</code>。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本节主要介绍了 React Fiber 架构下「协调」算法的核心逻辑。现在我们对整个「协调」算法总结一下。</p>
+</div><div class="cl-preview-section"><ol>
+<li style="font-size: 20px; line-height: 38px;">协调的“对象”是 React 元素，得到的是下一个 Fiber 结点。</li>
+<li style="font-size: 20px; line-height: 38px;">我们常说的 React 中的 diff 算法是「协调」逻辑的一部分，被 diff 的双方分别是（新）元素和（已有）Fiber 结点。</li>
+<li style="font-size: 20px; line-height: 38px;">执行「协调」的过程对于单个元素和数组元素分别执行不同的方法进行处理。</li>
+<li style="font-size: 20px; line-height: 38px;">应用程序首次渲染时一般不涉及到 diff 过程，因为所有的元素均会转换为要插入的 Fiber 结点。</li>
+<li style="font-size: 20px; line-height: 38px;">应用程序更新渲染时通过进行（新）元素和（已有）Fiber 结点的 diff 处理，对结点标记对应的 effectTag。</li>
+</ol>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在完成工作单元时 React 将所有标记了 effectTag 的结点收集起来，形成了 Effect List。下一节将会以具体实例说明更新渲染时的 Effect List 到底是什么样的。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2398">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            28 React 应用程序更新渲染时如何构建 workInProgress 树？
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2401">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            30 通过实例分析应用程序更新渲染时的副作用列表
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img2.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

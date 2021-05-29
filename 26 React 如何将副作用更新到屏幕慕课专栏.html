@@ -1,0 +1,306 @@
+<html><head><meta charset="utf-8"><title>26 React 如何将副作用更新到屏幕-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        26 React 如何将副作用更新到屏幕
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-09-25 09:53:13
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img2.sycdn.imooc.com/5f6888c60001f63960164016.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">人要有毅力，否则将一事无成。——居里夫人<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本章前面几节介绍了应用程序首次渲染时在 render 阶段 React 如何构建 workInProgress 树以及收集副作用等工作。在 render 阶段结束时 fiberRoot 对象上面将会得到一个副作用列表（Effect List），这个副作用列表中携带的更新内容就是要更新到屏幕中的信息。本节将会介绍 React 如何将副作用列表中的信息更新到屏幕以及 React 在这个过程中主要做了哪些工作。</p>
+</div><div class="cl-preview-section"><h2 id="应用程序执行时进入-commit-阶段的时机" style="font-size: 30px;">应用程序执行时进入 commit 阶段的时机</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">进入 commit 阶段的入口是<code>commitRoot</code>函数，该函数也是在<code>renderRoot</code>函数中调用，见代码示例 5.7.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-java"><code class="prism  language-java">function <span class="token function">renderRoot</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> expirationTime<span class="token punctuation">,</span> isSync<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 此处形参root为fiberRoot对象</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token comment">// root.current.alternate指向的是workInProgress对象树</span>
+  root<span class="token punctuation">.</span>finishedWork <span class="token operator">=</span> root<span class="token punctuation">.</span>current<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>workInProgressRootExitStatus<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      <span class="token keyword">case</span> RootCompleted<span class="token operator">:</span>
+      	<span class="token comment">// 进入commit阶段</span>
+      	<span class="token keyword">return</span> commitRoot<span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span>null<span class="token punctuation">,</span> root<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.7.1 commitRoot 函数的执行时机</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">工作循环执行结束，标志着应用程序渲染过程中 render 阶段工作的完成。此时 fiberRoot 对象上面的 workInProgress 树存储在 <code>root.current.alternate</code>指向的内存单元。React 会将 workInProgress 树赋值到 fiberRoot 对象上的<code>finishedWork</code>属性中。然后，检查<code>workInProgressRootExitStatus</code>的状态，如果是正常结束，则应用程序渲染任务进入 commit 阶段。</p>
+</div><div class="cl-preview-section"><h2 id="副作用-commit-过程" style="font-size: 30px;">副作用 commit 过程</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">副作用 commit 时程序的整体执行流程见下图 5.7.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f6888240001c3b917631042.png" data-original="//img1.sycdn.imooc.com/5f6888240001c3b917631042.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.7.1 副作用 commit 时程序执行流程</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序执行在 commit 阶段时，React 将这个过程又分为三个步，分别是 <strong>before commit、commit 和 after commit</strong>。在这三个步分别调用<code>commitBeforeMutationEffects</code>，<code>commitMutationEffects</code>和<code>commitLayoutEffects</code>三个函数来执行具体的工作。<code>commitRoot</code>函数内部调用<code>commitRootImpl</code>函数实现 commit 阶段的具体逻辑，见代码示例 5.7.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="token keyword">function</span> <span class="token function">commitRootImpl</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> renderPriorityLevel<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token comment">// 获取workInProgress对象树</span>
+  <span class="token keyword">var</span> finishedWork <span class="token operator">=</span> root<span class="token punctuation">.</span>finishedWork<span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">var</span> firstEffect <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>finishedWork<span class="token punctuation">.</span>effectTag <span class="token operator">&gt;</span> PerformedWork<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Fiber树的副作用列表只能由它的孩子组成，不包括它自己。如果根节点有一个副作用，那么需要将这个副作用放到</span>
+    <span class="token comment">// 副作用列表的尾部。最终的副作用列表将是不包括根节点的父节点的集合，如果只有一个副作用，那么就是根节点。</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>finishedWork<span class="token punctuation">.</span>lastEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      finishedWork<span class="token punctuation">.</span>lastEffect<span class="token punctuation">.</span>nextEffect <span class="token operator">=</span> finishedWork<span class="token punctuation">;</span>
+      firstEffect <span class="token operator">=</span> finishedWork<span class="token punctuation">.</span>firstEffect<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 此时的副作用列表就是根节点（一般是首次渲染）</span>
+      firstEffect <span class="token operator">=</span> finishedWork<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果在根节点没有副作用，则取finishedWork.firstEffect</span>
+    firstEffect <span class="token operator">=</span> finishedWork<span class="token punctuation">.</span>firstEffect<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 接下来开始遍历副作用列表，先获取副作用列表的引用</span>
+  <span class="token comment">// 1. commit副作用之前处理生命周期函数</span>
+  nextEffect <span class="token operator">=</span> firstEffect<span class="token punctuation">;</span>
+  <span class="token keyword">do</span> <span class="token punctuation">{</span>
+      <span class="token function">invokeGuardedCallback</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> commitBeforeMutationEffects<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    	<span class="token comment">// ...</span>
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+  <span class="token comment">// 2. 正式commit副作用</span>
+  nextEffect <span class="token operator">=</span> firstEffect<span class="token punctuation">;</span>
+  <span class="token keyword">do</span> <span class="token punctuation">{</span>
+  	<span class="token function">invokeGuardedCallback</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> commitMutationEffects<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> renderPriorityLevel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  <span class="token comment">// 3. commit布局副作用，意思是更新完成后的逻辑，如处理生命周期函数，重置fiber树等</span>
+  nextEffect <span class="token operator">=</span> firstEffect<span class="token punctuation">;</span>
+  <span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token function">invokeGuardedCallback</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> commitLayoutEffects<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> root<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.7.2 commit 阶段的三个步骤</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">代码示例 5.7.2 中，<code>finishedWork.effectTag &gt; PerformedWork</code>判断的是当前副作用是否需要更新，因为<code>NoEffect</code>和<code>PerformedWork</code>的值分别为<code>0</code>和<code>1</code>，只有大于这两个值就说明有更新需要执行。</p>
+</div><div class="cl-preview-section"><h3 id="commitbeforemutationeffects-函数（执行于副作用-commit-前）">commitBeforeMutationEffects 函数（执行于副作用 commit 前）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">commit 副作用之前会先在<code>commitBeforeMutationEffects</code>函数中处理相应的生命周期函数，见代码示例 5.7.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="token keyword">function</span> <span class="token function">commitBeforeMutationEffects</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+    <span class="token comment">// 调用 getSnapshotBeforeUpdate</span>
+    <span class="token function">commitBeforeMutationLifeCycles</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> nextEffect<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">...</span>
+    nextEffect <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>nextEffect<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">代码示例 5.7.3 应用程序 commit 前处理生命周期函数</font></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">正式 commit 副作用前，React 会调用结点的<code>getSnapshotBeforeUpdate</code>生命周期函数。</p>
+</div><div class="cl-preview-section"><h3 id="commitmutationeffects-函数（正式-commit-副作用）">commitMutationEffects 函数（正式 commit 副作用）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在<code>commitMutationEffects</code>函数中正式 commit 副作用，将副作用更新到屏幕，见代码示例 5.7.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="token keyword">function</span> <span class="token function">commitMutationEffects</span><span class="token punctuation">(</span>renderPriorityLevel<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+    <span class="token comment">// 获取副作用类型</span>
+    <span class="token keyword">var</span> effectTag <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>effectTag<span class="token punctuation">;</span>
+    <span class="token operator">...</span>
+    <span class="token keyword">var</span> primaryEffectTag <span class="token operator">=</span> effectTag <span class="token operator">&amp;</span> <span class="token punctuation">(</span>Placement <span class="token operator">|</span> Update <span class="token operator">|</span> Deletion<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 根据 effectTAg 执行对应的操作</span>
+    <span class="token keyword">switch</span> <span class="token punctuation">(</span>primaryEffectTag<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">case</span> PlacementAndUpdate<span class="token punctuation">:</span>
+        <span class="token comment">// 首次渲染时插入到屏幕</span>
+        <span class="token function">commitPlacement</span><span class="token punctuation">(</span>nextEffect<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nextEffect<span class="token punctuation">.</span>effectTag <span class="token operator">&amp;=</span> <span class="token operator">~</span>Placement<span class="token punctuation">;</span>
+        <span class="token keyword">var</span> _current <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+        <span class="token comment">// 开始commit工作</span>
+        <span class="token function">commitWork</span><span class="token punctuation">(</span>_current<span class="token punctuation">,</span> nextEffect<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token operator">...</span>
+    nextEffect <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>nextEffect<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">代码示例 5.7.4 应用程序的副作用正式 commit</font></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序 commit 副作用时，会根据 EffectTag 的类型执行对应的操作（插入，删除，更新等）。应用首次渲染时副作用类型会匹配到<code>PlacementAndUpdate</code>，具体处理逻辑在<code>commitPlacement</code>函数中，该函数主要负责插入 DOM 元素到屏幕，见代码示例 5.7.5。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberCommitWork.js</span>
+<span class="token keyword">function</span> <span class="token function">commitPlacement</span><span class="token punctuation">(</span>finishedWork<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 形参finishedWork指的的当前需要执行的副作用（Fiber）结点</span>
+  <span class="token comment">// ...</span>
+  <span class="token comment">// 获取容器</span>
+  <span class="token keyword">var</span> parent <span class="token operator">=</span> parentStateNode<span class="token punctuation">.</span>containerInfo<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> node <span class="token operator">=</span> finishedWork<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> isHost <span class="token operator">=</span> node<span class="token punctuation">.</span>tag <span class="token operator">===</span> HostComponent <span class="token operator">||</span> node<span class="token punctuation">.</span>tag <span class="token operator">===</span> HostText<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> stateNode <span class="token operator">=</span> isHost <span class="token operator">?</span> node<span class="token punctuation">.</span>stateNode <span class="token punctuation">:</span> node<span class="token punctuation">.</span>stateNode<span class="token punctuation">.</span>instance<span class="token punctuation">;</span>
+  <span class="token comment">// 操作DOM，将更新内容绘制到屏幕</span>
+  <span class="token function">appendChildToContainer</span><span class="token punctuation">(</span>parent<span class="token punctuation">,</span> stateNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.7.5 将根据副作用生成的 DOM 元素插入到页面中对应位置</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">前面已经介绍过，<code>HostComponent</code>类型的 Fiber 结点在完成工作单元时会创建当前结点对应的 DOM 元素实例，并将其赋值到该结点的<code>stateNode</code>属性上。<code>commitPlacement</code>函数中的<code>node.stateNode</code>指向的就是当前结点对应的 DOM 元素实例。执行完<code>appendChildToContainer(parent, stateNode)</code>后应用程序中的副作用就会渲染到屏幕上。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序中的副作用就会渲染到屏幕上后 React 还需要做一些收尾工作，如将当前的 workInProgress 树赋值给 current 树，调用更新完成后的生命周期函数等。</p>
+</div><div class="cl-preview-section"><h3 id="workinprogress-树赋值给-current-树">workInProgress 树赋值给 current 树</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>commitMutationEffects</code>函数执行完成后，需要更新的内容已经绘制到了屏幕上，此时的 workInProgress 树也就成了应用程序最新的状态树。因此 React 将<code>fiberRoot.current</code>指向（最新）的 workInProgress 树。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 这里的finishedWork引用的是workInProgress树</span>
+root<span class="token punctuation">.</span>current <span class="token operator">=</span> finishedWork<span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">此时，fiberRoot 对象的内部结构如图 5.7.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f6888730001385415171007.png" data-original="//img1.sycdn.imooc.com/5f6888730001385415171007.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.7.2 应用程序首次渲染完成后的 fiberRoot 对象内部结构</font></center>
+</div><div class="cl-preview-section"><h3 id="commitlayouteffects-函数（执行于副作用-commit-后）">commitLayoutEffects 函数（执行于副作用 commit 后）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>commitLayoutEffects</code>函数在更新内容 commit 到屏幕之后执行，主要负责 commit 阶段的一些收尾工作，见代码示例 5.7.6。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberCommitWork.js</span>
+<span class="token keyword">function</span> <span class="token function">commitLayoutEffects</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> committedExpirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>nextEffect <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    <span class="token keyword">var</span> current <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+    <span class="token comment">// class类型的组件，会调用instance.componentDidMount()和</span>
+    <span class="token comment">// instance.componentDidUpdate(prevProps, prevState, ...);</span>
+    <span class="token function">commitLifeCycles</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> current<span class="token punctuation">,</span> nextEffect<span class="token punctuation">,</span> committedExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+    nextEffect <span class="token operator">=</span> nextEffect<span class="token punctuation">.</span>nextEffect<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.7.6 commit 完成后调用相关生命周期函数</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序的副作用更新到屏幕后，对于<code>ClassComponent</code>类型的结点，React 会调用该结点的生命周期函数，如<code>componentDidMount</code>和<code>componentDidUpdate</code>。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本节主要介绍了在应用程序首次渲染时 React 如何将副作用列表的中的每一个副作用携带的更新信息渲染到屏幕，这个过程的主要工作就是生命周期函数的调用以及 DOM 元素的插入（删除或者更新）等。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本章主要介绍应用程序首次渲染时在不同的阶段 React 所做的一些重点工作，包括构建 fiberRoot 对象，构建 workInProgress 树，收集副作用列表以及将副作用渲染到屏幕等。事实上还有一些重要的内容并没有介绍到，就是 React Fiber 架构中结点的「协调」与「diff」逻辑，这部分内容将会在下一章应用程序更新渲染时 React 所做的工作内容中进行详细介绍。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">看到这里，我们应该对 React 的内部执行机制有了一个整体的认识。在这里建议读者重新读一遍前面的文章加以深对应用程序执行过程中 React 内部执行机制的理解。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2388">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            25 完成工作单元：创建 DOM 元素实例与收集副作用
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2397">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            27 React 应用程序更新渲染时内部运行流程概述
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img4.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

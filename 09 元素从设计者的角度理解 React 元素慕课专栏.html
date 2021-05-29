@@ -1,0 +1,293 @@
+<html><head><meta charset="utf-8"><title>09 元素：从设计者的角度理解 React 元素-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        09 元素：从设计者的角度理解 React 元素
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-08-20 10:00:03
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img2.sycdn.imooc.com/5f2d0d550001c98b06400359.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">人生太短，要干的事太多，我要争分夺秒。——爱迪生<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 元素是应用程序运行过程中用于描述页面结构的关键「数据/对象」。React 用元素来描述页面结构也是 React 拥有良好的性能表现的关键因素之一。本节将会介绍 React 元素的设计原理。</p>
+</div><div class="cl-preview-section"><h2 id="什么是-react-元素" style="font-size: 30px;">什么是 React 元素</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 官方文档 - <a href="https://reactjs.org/docs/rendering-elements.html">元素渲染</a> 中给出了元素的描述：元素是构成 React 应用的最小砖块，它描述了你在屏幕上想看到的内容。在程序中它可以是代码示例 2.6.1这样的。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token punctuation">(</span>
+  <span class="token operator">&lt;</span>h1 className<span class="token operator">=</span><span class="token string">"greeting"</span><span class="token operator">&gt;</span>
+    Hello<span class="token punctuation">,</span> world<span class="token operator">!</span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">&gt;</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.1 使用 JSX 定义元素</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上面这个有趣的标签语法既不是字符串也不是 HTML，它被称为 JSX，是一个 JavaScript 的语法扩展，它可以生成 React 元素。React 元素在程序中也可以是代码示例 2.6.2 这样的。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">const</span> element <span class="token operator">=</span> React<span class="token punctuation">.</span><span class="token function">createElement</span><span class="token punctuation">(</span>
+  <span class="token string">'h1'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>className<span class="token punctuation">:</span> <span class="token string">'greeting'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token string">'Hello, world!'</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><p align="center" style="font-size: 20px; line-height: 38px;"><font size="2">代码示例 2.6.2 使用 createElement 函数定义元素</font></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">Babel 会把 JSX 转译成一个名为 <code>React.createElement()</code> 的函数调用。因此上面两种示例代码完全等效。<code>React.createElement( ... )</code> 会预先执行一些检查，以帮助我们编写无错代码，最终它创建的元素结构是代码示例 2.6.3 这样的对象。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 这是简化后的结构</span>
+<span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'h1'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    className<span class="token punctuation">:</span> <span class="token string">'greeting'</span><span class="token punctuation">,</span>
+    children<span class="token punctuation">:</span> <span class="token string">'Hello, world!'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.3 简化后的元素结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">代码示例 2.6.3 中的对象 <strong>React 元素</strong> 最终的形态，它们 <strong>描述</strong> 了我们希望在屏幕上看到的内容。React 对元素的详细定义见代码示例2.6.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/shared/ReactElementType.js</span>
+<span class="token keyword">var</span> <span class="token function-variable function">ReactElement</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>type<span class="token punctuation">,</span> key<span class="token punctuation">,</span> ref<span class="token punctuation">,</span> self<span class="token punctuation">,</span> source<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> props<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> element <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 这个标记将其标识为React元素，且保证唯一性</span>
+    $$<span class="token keyword">typeof</span><span class="token punctuation">:</span> REACT_ELEMENT_TYPE<span class="token punctuation">,</span>
+    <span class="token comment">// 元素类型，如宿主元素（div，span），组件元素（UpdateCounter）</span>
+    type<span class="token punctuation">:</span> type<span class="token punctuation">,</span>
+    key<span class="token punctuation">:</span> key<span class="token punctuation">,</span>
+    <span class="token comment">// 组件实例的引用</span>
+    ref<span class="token punctuation">:</span> ref<span class="token punctuation">,</span>
+    <span class="token comment">// 元素属性</span>
+    props<span class="token punctuation">:</span> props<span class="token punctuation">,</span>
+    _owner<span class="token punctuation">:</span> owner
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">return</span> element<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.4 React 对元素的定义</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">现在来思考一个问题，<strong>为什么 React 要用元素这样的对象结构来描述页面结构？</strong></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>对象方便处理（添加/修改/删除属性）</strong>。应用程序渲染时，React 首先读取应用程序的元素对象，然后使用它们来构建 DOM 以及保持随时更新。与浏览器的 DOM 元素不同，React 元素是创建开销极小（因为属性少）的普通对象。React 会负责更新元素来保证与 DOM 保持一致。</p>
+</div><div class="cl-preview-section"><h2 id="元素的种类与组成" style="font-size: 30px;">元素的种类与组成</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 元素主要可以分为两大类，分别是 React 组件元素和宿主组件（如<code>div</code>，<code>span</code>等）元素。这两类元素可以组合嵌套构成各种元素来描述任何 DOM 结构。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：宿主组件元素（HostComponent）在 React 中一般表示的是 DOM 元素。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h3 id="一、react-元素全部由宿主组件元素构成的情况">一、React 元素全部由宿主组件元素构成的情况</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 元素全部由 DOM 元素组成，JSX 的写法见代码示例 2.6.5。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">'button button-blue'</span><span class="token operator">&gt;</span>
+      <span class="token operator">&lt;</span>b<span class="token operator">&gt;</span>
+        OK<span class="token operator">!</span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>b<span class="token operator">&gt;</span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+<span class="token punctuation">)</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.5 纯 DOM 元素组成的 React 元素</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上面 JSX 的代码实现的元素被编译后的形态见代码示例 2.6.6。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript">element <span class="token operator">=</span> <span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'button'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    className<span class="token punctuation">:</span> <span class="token string">'button button-blue'</span><span class="token punctuation">,</span>
+    children<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      type<span class="token punctuation">:</span> <span class="token string">'b'</span><span class="token punctuation">,</span>
+      props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        children<span class="token punctuation">:</span> <span class="token string">'OK!'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.6 纯 DOM 元素组成的 React 元素最终形态</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">这里需要注意的是 <strong>元素之间通过<code>children</code>属性进行嵌套</strong>。在创建元素（树）时，可以指定一个或多个子元素作为其包含（父）元素的<code>children</code>属性值。</p>
+</div><div class="cl-preview-section"><h3 id="二、react-元素由组件和-dom-元素组合构成的情况">二、React 元素由组件和 DOM 元素组合构成的情况</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">事实上，在组件的两边加上<code>&lt;</code>和<code>/&gt;</code>就变成了元素，它代表的 UI 部分就是组件<code>render</code>函数的返回值。组件元素就像 DOM 元素一样，它们也可以相互嵌套和混合。图 2.6.1一个删除提示组件，程序见代码示例 2.6.7。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f31266e0001529f03360180.png" data-original="//img1.sycdn.imooc.com/5f31266e0001529f03360180.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 2.6.1 删除提示组件</font></center>
+</div><div class="cl-preview-section"><pre class=" language-javascript"><code class="prism  language-javascript"><span class="token comment">// DeleteButton组件</span>
+<span class="token keyword">class</span> <span class="token class-name">DeleteButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&lt;</span>button className<span class="token operator">=</span><span class="token string">"redBtn"</span><span class="token operator">&gt;</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>props<span class="token punctuation">.</span>children<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// Operation组件</span>
+<span class="token keyword">class</span> <span class="token class-name">Operation</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&lt;</span>div<span class="token operator">&gt;</span>
+      	<span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>确定要删除吗<span class="token operator">?</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">&gt;</span>
+        <span class="token operator">&lt;</span>DeleteButton<span class="token operator">&gt;</span>删除<span class="token operator">&lt;</span><span class="token operator">/</span>DeleteButton<span class="token operator">&gt;</span>
+        <span class="token operator">&lt;</span>button<span class="token operator">&gt;</span>取消<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token operator">&lt;</span>Operation <span class="token operator">/</span><span class="token operator">&gt;</span>
+ReactDOM<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.7 删除提示组件代码结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">代码示例 2.6.7 中先定义了<code>DeleteButton</code>组件，然后在<code>Operation</code>组件中使用。<code>Operation</code>组件的 UI 部分由<code>DeleteButton</code>组件和 宿主组件元素（<code>p</code>，<code>button</code>）组成，该组件最后会被编译成的元素结构见代码示例 2.6.8。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// Operation组件返回的元素</span>
+<span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'div'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    children<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+      type<span class="token punctuation">:</span> <span class="token string">'p'</span><span class="token punctuation">,</span>
+      props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        children<span class="token punctuation">:</span> <span class="token string">'确定要删除吗？'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+      type<span class="token punctuation">:</span> DeleteButton<span class="token punctuation">,</span>
+      props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        children<span class="token punctuation">:</span> <span class="token string">'删除'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+      type<span class="token punctuation">:</span> Button<span class="token punctuation">,</span>
+      props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        children<span class="token punctuation">:</span> <span class="token string">'取消'</span>
+      <span class="token punctuation">}</span>
+   <span class="token punctuation">}</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+  
+<span class="token comment">// DeleteButton组件返回的元素</span>
+<span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> Button<span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    className<span class="token punctuation">:</span> <span class="token string">'redBtn'</span><span class="token punctuation">,</span>
+    children<span class="token punctuation">:</span> <span class="token string">'取消'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 2.6.8 删除提示组件元素结构</font></center>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">**React 用元素来描述 DOM 结构的优点在于它们很容易遍历，不需要解析，并且它们比实际的 DOM 元素轻量得多！**React 组件是由 UI 部分加逻辑部分组成，其中 UI 部分就是 React 元素，元素在 render 会被转换成 React Fiber 对象（结点）。Fiber 对象的层层嵌套形成了应用程序的 <strong>Fiber树</strong>，所有更新的处理都在这颗「树」中计算。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 中组件和元素的根本区别就是 <strong>元素普通对象，而组件是类和函数</strong>，元素是组件的一部分。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2273">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            08 组件实例：组件实例到底是什么？
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2275">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            10 React 如何定义更新队列以及它们之间的相互作用关系？
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img3.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

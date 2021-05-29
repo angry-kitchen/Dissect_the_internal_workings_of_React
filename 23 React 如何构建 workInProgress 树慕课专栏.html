@@ -1,0 +1,280 @@
+<html><head><meta charset="utf-8"><title>23 React 如何构建 workInProgress 树-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        23 React 如何构建 workInProgress 树
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-09-18 10:04:42
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img3.sycdn.imooc.com/5f55af3d0001b99b06400427.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">辛苦是获得一切的定律。——牛顿<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">前面提到，React 应用程序首次渲染时在 prerender 阶段构建了 fiberRoot 对象，并将整个应用程序根组件元素作为更新内容加入到更新队列，然后附加到了 fiberRoot 对象上面。此时的 fiberRoot 对象将作为整个 Fiber 架构的根基进入到 render 阶段。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序渲染过程进入到 render 阶段时，React 的一项重要工作就是构建 workInProgress 树，在这个过程中 React 也会完成结点 diff 的逻辑，最终会得到用于更新到屏幕的副作用列表。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">构建 workInProgress 树的过程也是执行「协调算法」过程，通过循环解析工作单元获取下一个 Fiber 结点，同时父子结点和兄弟结点也会被串联起来。这个过程从整体上可以分为两步，分别是 <strong>初始化 workInProgress 对象和完善 workInProgress 对象</strong>。首先，我们先看一下应用程序执行过程刚进入 render 阶段时的 fiberRoot 对象。</p>
+</div><div class="cl-preview-section"><h2 id="进入-render-阶段时-fiberroot-对象" style="font-size: 30px;">进入 render 阶段时 fiberRoot 对象</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序首次渲染过程刚进入 render 阶段时 fiberRoot 对象的结构如图 5.4.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55af740001dae319820618.png" data-original="//img1.sycdn.imooc.com/5f55af740001dae319820618.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.4.1 进入 render 阶段时 fiberRoot 对象结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序首次渲染过程刚进入 render 阶段时 fiberRoot 对象上面只有 current 树，此时的 current 树只有一个类型为<code>HostRoot</code>的 Fiber 结点，该 Fiber 结点的更新队列中只有一个更新对象，该更新对象的内容就是是应用程序的根组件元素。紧接着 React 要做的就是初始化 workInProgress 对象。</p>
+</div><div class="cl-preview-section"><h2 id="初始化-workinprogress-对象" style="font-size: 30px;">初始化 workInProgress 对象</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">render 阶段的主要逻辑在<code>renderRoot</code>函数内，在该函数内部会通过<code>prepareFreshStack()</code>函数初始化 workInProgress 对象，见代码示例 5.4.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="token keyword">function</span> <span class="token function">prepareFreshStack</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 这里的形参root是fiberRoot对象</span>
+  <span class="token comment">// 重要参数重置</span>
+  root<span class="token punctuation">.</span>finishedWork <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  root<span class="token punctuation">.</span>finishedExpirationTime <span class="token operator">=</span> NoWork<span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+  workInProgressRoot <span class="token operator">=</span> root<span class="token punctuation">;</span>
+  <span class="token comment">// workInProgress变量会暴露到外层函数renderRoot作用域</span>
+  workInProgress <span class="token operator">=</span> <span class="token function">createWorkInProgress</span><span class="token punctuation">(</span>root<span class="token punctuation">.</span>current<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  renderExpirationTime <span class="token operator">=</span> expirationTime<span class="token punctuation">;</span>
+  workInProgressRootExitStatus <span class="token operator">=</span> RootIncomplete<span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.4.1 初始化 workInProgress 对象的外部函数</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">真正为 workInProgress 对象赋初始值的函数是<code>createWorkInProgress</code>，见代码示例 5.4.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiber.js</span>
+<span class="token keyword">function</span> <span class="token function">createWorkInProgress</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> pendingProps<span class="token punctuation">,</span> expirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 变量workInProgress和current.alternate指向了同一个内存，因此current.alternate就是workInProgress</span>
+  <span class="token keyword">var</span> workInProgress <span class="token operator">=</span> current<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+  <span class="token comment">// 首次渲染时current.alternate值为null，即workInProgress为null</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>workInProgress <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 开始为workInProgress树的第一个Fiber结点赋值，创建的是HostRoot类型的结点</span>
+    workInProgress <span class="token operator">=</span> <span class="token function">createFiber</span><span class="token punctuation">(</span>current<span class="token punctuation">.</span>tag<span class="token punctuation">,</span> pendingProps<span class="token punctuation">,</span> current<span class="token punctuation">.</span>key<span class="token punctuation">,</span> current<span class="token punctuation">.</span>mode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    workInProgress<span class="token punctuation">.</span>elementType <span class="token operator">=</span> current<span class="token punctuation">.</span>elementType<span class="token punctuation">;</span>
+    workInProgress<span class="token punctuation">.</span>type <span class="token operator">=</span> current<span class="token punctuation">.</span>type<span class="token punctuation">;</span>
+    workInProgress<span class="token punctuation">.</span>stateNode <span class="token operator">=</span> current<span class="token punctuation">.</span>stateNode<span class="token punctuation">;</span>
+    <span class="token operator">...</span>
+    <span class="token comment">// 这里的处理就形成了一个闭环</span>
+    workInProgress<span class="token punctuation">.</span>alternate <span class="token operator">=</span> current<span class="token punctuation">;</span>
+    current<span class="token punctuation">.</span>alternate <span class="token operator">=</span> workInProgress<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+  <span class="token punctuation">}</span>
+  workInProgress<span class="token punctuation">.</span>childExpirationTime <span class="token operator">=</span> current<span class="token punctuation">.</span>childExpirationTime<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>expirationTime <span class="token operator">=</span> current<span class="token punctuation">.</span>expirationTime<span class="token punctuation">;</span>
+
+  workInProgress<span class="token punctuation">.</span>child <span class="token operator">=</span> current<span class="token punctuation">.</span>child<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>memoizedProps <span class="token operator">=</span> current<span class="token punctuation">.</span>memoizedProps<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>memoizedState <span class="token operator">=</span> current<span class="token punctuation">.</span>memoizedState<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>updateQueue <span class="token operator">=</span> current<span class="token punctuation">.</span>updateQueue<span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+  workInProgress<span class="token punctuation">.</span>sibling <span class="token operator">=</span> current<span class="token punctuation">.</span>sibling<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>index <span class="token operator">=</span> current<span class="token punctuation">.</span>index<span class="token punctuation">;</span>
+  workInProgress<span class="token punctuation">.</span>ref <span class="token operator">=</span> current<span class="token punctuation">.</span>ref<span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+  <span class="token keyword">return</span> workInProgress<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.4.2 初始化 workInProgress 对象</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">事实上，workInProgress 树上面的第一个 Fiber 结点和 current 树上面的第一个 Fiber 结点中的属性值基本相同，workInProgress 对象初始化完成后 fiberRoot 对象的结构见图 5.4.2。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55afaa00011a3212770632.png" data-original="//img1.sycdn.imooc.com/5f55afaa00011a3212770632.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.4.2 workInProgress 对象初始化后的fiberRoot结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序首次渲染时经过执行<code>createWorkInProgress</code>函数后，workInProgress 对象（树）上面有了第一个 Fiber 结点，该结点的<code>tag</code>属性为<code>HostRoot</code>，它是整个 workInProgress 树的根结点。下面我们来看 React 如何来完善当前 workInProgress 对象，使之形成最终的workInProgress （对象）树。</p>
+</div><div class="cl-preview-section"><h2 id="完善-workinprogress-对象" style="font-size: 30px;">完善 workInProgress 对象</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">workInProgress 对象被完善后就成了我们所说的 workInProgress 树，那么该树将会是什么样的结构呢？见下图 5.4.3。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55afb40001d2f515320632.png" data-original="//img1.sycdn.imooc.com/5f55afb40001d2f515320632.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.4.3 workInProgress 树结构示意图</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">前面提到过，应用程序首次渲染时更新队列中只有一个更新对象，该更新对象携带的更新内容就是应用程序的根组件元素。事实上，要想把组件元素描述的页面结构映射到屏幕上必须先将元素转换为 Fiber 结点。React 完善 workInProgress 对象的过程就是将元素转换为 Fiber 结点的过程。那么，这个过程是什么样的呢？</p>
+</div><div class="cl-preview-section"><h3 id="循环解析工作单元">循环解析工作单元</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f55afd90001824807360547.png" data-original="//img1.sycdn.imooc.com/5f55afd90001824807360547.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 5.4.4 工作循环流程图</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">循环解析工作单元的过程主要是执行<code>workLoop</code>函数，这个过程也可以称为 <strong>工作循环</strong> ，每次循环解析的工作单元就是上一次 Fiber 结点的 child。第一次循环解析的是<code>HostRoot</code>类型的结点，该结点也就是所有结点的祖先。<code>workLoop</code>函数负责执行工作循环，该函数在<code>renderRoot</code>函数里面被调用，见代码示例 5.4.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">renderRoot</span><span class="token punctuation">(</span>root<span class="token punctuation">,</span> expirationTime<span class="token punctuation">,</span> isSync<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>isSync<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        	<span class="token comment">// 同步执行工作循环</span>
+          <span class="token function">workLoopSync</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+          <span class="token comment">// 正常执行工作循环</span>
+          <span class="token function">workLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 处理异常</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 工作循环函数</span>
+<span class="token keyword">function</span> <span class="token function">workLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 一直进行工作单元循环解析，直到任务调度器收回执行权</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>workInProgress <span class="token operator">!==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token function">shouldYield</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    workInProgress <span class="token operator">=</span> <span class="token function">performUnitOfWork</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.4.3 工作循环的执行时机与逻辑</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">循环解析工作单元，那么工作单元具体是怎么解析的呢？</p>
+</div><div class="cl-preview-section"><h3 id="解析工作单元的逻辑">解析工作单元的逻辑</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">解析工作单元的逻辑主要在<code>performUnitOfWork</code>函数中进行，见代码示例 5.4.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">performUnitOfWork</span><span class="token punctuation">(</span>unitOfWork<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// unitOfWork为当前需要解析的Fiber结点</span>
+  <span class="token comment">// 首次渲染时unitOfWork.alternate的值一般为null</span>
+  <span class="token keyword">var</span> current <span class="token operator">=</span> unitOfWork<span class="token punctuation">.</span>alternate<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> next <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token comment">// next为beginWork执行结束返回的Fiber结点，该结点也就成了下一次要解析的工作单元</span>
+  next <span class="token operator">=</span> <span class="token function">beginWork</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> unitOfWork<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>next <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果next值为null，说明当前的Fiber结点已经是叶子结点，接下来要执行完成工作单元解析工作</span>
+    next <span class="token operator">=</span> <span class="token function">completeUnitOfWork</span><span class="token punctuation">(</span>unitOfWork<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 5.4.4 performUnitOfWork 函数</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在<code>beginWork</code>函数内部通过匹配 Fiber 结点的<code>tag</code>值调用<code>updateHostRoot</code>，<code>updateClassComponent</code>，<code>updateHostComponent</code>和<code>updateHostText</code>等函数分别解析<code>HostRoot</code>，<code>ClassComponent</code>，<code>HostComponent</code>和<code>HostText</code>等类型的 Fiber 结点。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：工作单元解析的详细逻辑在下一节中进行介绍。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h3 id="完成工作单元">完成工作单元</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">工作单元解析执行到 workInProgress 树的叶子结点时，会完成当前工作单元。完成工作单元的主要工作是收集副作用，同时处理<code>HostComponent</code>类型的结点，创建对应的 DOM 元素并将他们 append 到父结点上。这部分内容在下一节进行详细介绍。</p>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">注：完成工作单元解析的详细逻辑在下一节中进行介绍。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">本节从整体层面介绍了 React 构建 workInProgress 树的时机与方式。从初始化 workInProgress 对象到形成 workInProgress 树，应用程序会执行多次循环，每一次循环都是在解析 Fiber 结点并返回下一个要解析的结点。这个过程中会使用重要的「协调」算法，同时也会进行结点的 diff 操作。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">如果当前工作单元的解析返回值为<code>null</code>，说明当前的 Fiber 已经是叶子结点，则需要完成当前解析工作。完成当前解析工作的过程要收集副作用，同时也要为<code>HostComponent</code>类型的结点创建对应的 DOM 元素并将他们 append 到父结点上。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">下一节将会介绍 React 如何解析常用类型的工作单元（Fiber 结点）以及完成工作单元。关于 React 如何解析每一种类型的 Fiber 结点以及「协调」算法的整体逻辑，还有 diff 操作的过程等内容将会在后面文章中进行详细介绍。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2328">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            22 什么是 current 树和 workInProgress 树
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2330">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            24 React 如何解析工作单元以及什么时候完成工作单元
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img4.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

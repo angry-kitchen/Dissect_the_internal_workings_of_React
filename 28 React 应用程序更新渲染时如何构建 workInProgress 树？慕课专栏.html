@@ -1,0 +1,384 @@
+<html><head><meta charset="utf-8"><title>28 React 应用程序更新渲染时如何构建 workInProgress 树？-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        28 React 应用程序更新渲染时如何构建 workInProgress 树？
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-10-09 10:19:29
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img2.sycdn.imooc.com/5f7292850001f63960164016.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">对自己不满是任何真正有才能的人的根本特征之一。——契诃夫<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上一节提到当应用程序触发了<code>setState( ... )</code>操作后，React 接收的更新请求并获得更新任务执行权后就进入了整个渲染流程的 render 阶段。在更新渲染过程的 render 阶段 React 也要构建 workInProgress 树，此时的构建流程和首次渲染时基本相同。但是，在应用程序的更新渲染时，React 会更加关心结点前后 <code>state</code>和<code>props</code>的变化。本节将会介绍应用程序更新渲染时 React 如何构建 workInProgress 树。</p>
+</div><div class="cl-preview-section"><h2 id="从-current-树上面获取-workinprogress-对象" style="font-size: 30px;">从 current 树上面获取 workInProgress 对象</h2>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript">workInProgress <span class="token operator">=</span> current<span class="token punctuation">.</span>alternate
+<span class="token comment">// 重置相关属性</span>
+workInProgress<span class="token punctuation">.</span>pendingProps <span class="token operator">=</span> pendingProps<span class="token punctuation">;</span>
+workInProgress<span class="token punctuation">.</span>effectTag <span class="token operator">=</span> NoEffect<span class="token punctuation">;</span>
+workInProgress<span class="token punctuation">.</span>nextEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+workInProgress<span class="token punctuation">.</span>firstEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+workInProgress<span class="token punctuation">.</span>lastEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token operator">...</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.1 获取 workInProgress 对象</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">前面提到，React 应用程序首次渲染完成后 fiberRoot 对象上面会存在 current 树。其中<code>current.alternate</code>指向的是下一次更新渲染时的 workInProgress 树，渲染开始执行前它是只有一个<code>HostRoot</code>类型的 Fiber 结点的对象。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">有了 workInProgress 对象后，下一步就是通过工作循环完善该对象，这个过程依然是要进行解析工作单元以及完成工作单元。</p>
+</div><div class="cl-preview-section"><h2 id="解析工作单元" style="font-size: 30px;">解析工作单元</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在应用程序更新渲染时，React 解析工作单元（Fiber 结点）的主要关注点会是<code>ClassComponent</code>类型的 Fiber 结点。解析<code>ClassComponent</code>类型的结点时需要完成以下几方面的工作。</p>
+</div><div class="cl-preview-section"><h3 id="处理结点的更新队列（updatequeue）">处理结点的更新队列（updateQueue）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">上一节提到，当某个 class 类型的组件内部触发了<code>setState( ... )</code>操作后，React 会创建对应的更新对象并将其加入到该组件对应的 Fiber 结点的更新队列中。此时的 fiberRoot 结构对象如下图 6.2.1。<br>
+<img class="" src="https://img1.sycdn.imooc.com/5f7292af00015b0622290623.png" data-original="//img1.sycdn.imooc.com/5f7292af00015b0622290623.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 6.2.1 将更新加入对应结点的更新队列后 fiberRoot 对象结构</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序执行到 render 阶段，在解析工作单元时 React 会处理该结点的更新队列，目的就是获取更新对象中最新的<code>payload</code>信息，见代码示例 6.2.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">updateClassInstance</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> ctor<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 形成workInProgress为当前解析的Fiber结点</span>
+  <span class="token keyword">var</span> instance <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>stateNode<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> oldProps <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>memoizedProps<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> oldState <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>memoizedState<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> newState <span class="token operator">=</span> instance<span class="token punctuation">.</span>state <span class="token operator">=</span> oldState<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> updateQueue <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>updateQueue<span class="token punctuation">;</span>
+  <span class="token comment">// 如果当前Fiber结点中的updateQueue不为null，则处理该updateQueue</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>updateQueue <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 处理updateQueue</span>
+    <span class="token function">processUpdateQueue</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">,</span> updateQueue<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> instance<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 处理updateQueue后，将会获得新的state</span>
+    newState <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>memoizedState<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.2 处理该结点的 updateQueue</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在<code>processUpdateQueue</code>函数中会处理当前 Fiber 结点的更新队列并将最终的<code>state</code>赋值到当前 Fiber 结点的<code>memoizedState</code>属性中。</p>
+</div><div class="cl-preview-section"><h3 id="检查结点是否需要更新">检查结点是否需要更新</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">处理完该结点的 updateQueue 后就可以得到最新的<code>state</code>，然后 React 需要对比前后<code>state</code>以决定当前结点是否需要更新，见代码示例 6.2.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">updateClassInstance</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> ctor<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 形成workInProgress为当前解析的Fiber结点</span>
+  <span class="token comment">// 处理更新队列模块 ...</span>
+  
+  <span class="token comment">// 检查当前结点是否需要更新</span>
+  <span class="token keyword">var</span> shouldUpdate <span class="token operator">=</span> <span class="token function">checkHasForceUpdateAfterProcessing</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token function">checkShouldComponentUpdate</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">,</span> ctor<span class="token punctuation">,</span> oldProps<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> oldState<span class="token punctuation">,</span> newState<span class="token punctuation">,</span> nextContext<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">checkShouldComponentUpdate</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">,</span> ctor<span class="token punctuation">,</span> oldProps<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> oldState<span class="token punctuation">,</span> newState<span class="token punctuation">,</span> nextContext<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> instance <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>stateNode<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> instance<span class="token punctuation">.</span>shouldComponentUpdate <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果当前组件中有shouldComponentUpdate生命周期函数，则优先执行该函数</span>
+    <span class="token keyword">var</span> shouldUpdate <span class="token operator">=</span> instance<span class="token punctuation">.</span><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>newProps<span class="token punctuation">,</span> newState<span class="token punctuation">,</span> nextContext<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> shouldUpdate<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 如果当前组件中没有shouldComponentUpdate生命周期函数，则进行前后props和state对比</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>ctor<span class="token punctuation">.</span>prototype <span class="token operator">&amp;&amp;</span> ctor<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>isPureReactComponent<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">!</span><span class="token function">shallowEqual</span><span class="token punctuation">(</span>oldProps<span class="token punctuation">,</span> newProps<span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token function">shallowEqual</span><span class="token punctuation">(</span>oldState<span class="token punctuation">,</span> newState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.3 检查该结点是否需要更新</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">检查工作单元是否需要更新首先根据该结点是否有<code>shouldComponentUpdate</code>生命周期函数，有则调用该函数并取其执行结果，没有则进行结点的 props 和 state 前后对比。这里在进行对象是否相等比较时，React 定义了<code>shallowEqual</code>方法，那么 <strong>React 是怎么比较引用类型数据是否相等</strong>的呢？见代码示例 6.2.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/shared/shallowEqual.js</span>
+<span class="token keyword">function</span> <span class="token function">shallowEqual</span><span class="token punctuation">(</span>objA<span class="token punctuation">,</span> objB<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">is</span><span class="token punctuation">(</span>objA<span class="token punctuation">,</span> objB<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> objA <span class="token operator">!==</span> <span class="token string">'object'</span> <span class="token operator">||</span> objA <span class="token operator">===</span> <span class="token keyword">null</span> <span class="token operator">||</span> <span class="token keyword">typeof</span> objB <span class="token operator">!==</span> <span class="token string">'object'</span> <span class="token operator">||</span> objB <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">var</span> keysA <span class="token operator">=</span> Object<span class="token punctuation">.</span><span class="token function">keys</span><span class="token punctuation">(</span>objA<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> keysB <span class="token operator">=</span> Object<span class="token punctuation">.</span><span class="token function">keys</span><span class="token punctuation">(</span>objB<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>keysA<span class="token punctuation">.</span>length <span class="token operator">!==</span> keysB<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// Test for A's keys different from B.</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> keysA<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>Object<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>hasOwnProperty<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>objB<span class="token punctuation">,</span> keysA<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token function">is</span><span class="token punctuation">(</span>objA<span class="token punctuation">[</span>keysA<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> objB<span class="token punctuation">[</span>keysA<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">is</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> x <span class="token operator">===</span> y <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>x <span class="token operator">!==</span> <span class="token number">0</span> <span class="token operator">||</span> <span class="token number">1</span> <span class="token operator">/</span> x <span class="token operator">===</span> <span class="token number">1</span> <span class="token operator">/</span> y<span class="token punctuation">)</span> <span class="token operator">||</span> x <span class="token operator">!==</span> x <span class="token operator">&amp;&amp;</span> y <span class="token operator">!==</span> y<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.4 React 比较引用类型数据是否相等</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>shallowEqual</code>函数的逻辑并不复杂，可以看做是教科书级别的引用类型数据相等检测方法，我们应该熟记该方法。</p>
+</div><div class="cl-preview-section"><h2 id="协调（reconcile）与结点-diff-过程" style="font-size: 30px;">协调（reconcile）与结点 diff 过程</h2>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 执行「协调算法」，获取下一个Fiber结点</span>
+<span class="token function">reconcileChildren</span><span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> nextChildren<span class="token punctuation">,</span> renderExpirationTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">当检测到 class 组件对应的 Fiber 结点需要更新后，React 会通过<code>instance.render()</code>获取组件元素，将该组件元素传入到「协调算法」中，然后获得下一个 Fiber 结点。获得下一个 Fiber 结点的过程也是 React 进行（新的）元素与现有 Fiber 结点进行 diff 处理的过程。下节将会对这部分内容进行详细介绍。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在应用程序更新渲染过程中，render 阶段还有一项重要工作就是为结点标记 effectTag。</p>
+</div><div class="cl-preview-section"><h2 id="为结点标记-effecttag" style="font-size: 30px;">为结点标记 effectTag</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">我们知道，React 中的更新类型包括了插入（<code>Placement</code>），更新（<code>Update</code>），插入并更新（<code>PlacementAndUpdate</code>）以及删除（<code>Deletion</code>）等多种类型。那么，这些类型的 effectTag 是怎么以及何时被标记到 Fiber 结点中的呢？下面列举了一下主要的标记方式。</p>
+</div><div class="cl-preview-section"><h3 id="标记插入（placement）">标记插入（<code>Placement</code>）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在「协调」获取下一个 Fiber 结点的过程中调用<code>placeChild</code>函数为下一个结点标记<code>Placement</code>，见代码示例6.2.5。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">placeChild</span><span class="token punctuation">(</span>newFiber<span class="token punctuation">,</span> lastPlacedIndex<span class="token punctuation">,</span> newIndex<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// ...</span>
+  newFiber<span class="token punctuation">.</span>effectTag <span class="token operator">=</span> Placement<span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">return</span> lastPlacedIndex<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">placeSingleChild</span><span class="token punctuation">(</span>newFiber<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>shouldTrackSideEffects <span class="token operator">&amp;&amp;</span> newFiber<span class="token punctuation">.</span>alternate <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    newFiber<span class="token punctuation">.</span>effectTag <span class="token operator">=</span> Placement<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newFiber<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.5 为Fiber结点标记 Placement</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>placeChild</code>函数一般在「协调」处理数组元素时被调用并返回要插入的位置索引，数组元素相对于现有 Fiber 结点结构有了新的元素时，需要将新元素对应的 Fiber 结点标记为<code>Placement</code>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">而<code>placeSingleChild</code>函数一般是在有新的结点生成时会被调用，比如程序中控制元素显示的条件值变为<code>true</code>。</p>
+</div><div class="cl-preview-section"><h3 id="标记更新（update）">标记更新（<code>Update</code>）</h3>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">markUpdate</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 该函数为结点标记更新，也会会将Placement转化为PlacementAndUpdate.</span>
+  workInProgress<span class="token punctuation">.</span>effectTag <span class="token operator">|=</span> Update<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function-variable function">updateHostComponent</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>current<span class="token punctuation">,</span> workInProgress<span class="token punctuation">,</span> type<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> rootContainerInstance<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> instance <span class="token operator">=</span> workInProgress<span class="token punctuation">.</span>stateNode<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> currentHostContext <span class="token operator">=</span> <span class="token function">getHostContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 为HostComponent类型结点对应的DOM实例计算更新内容，如何计算见下文</span>
+  <span class="token keyword">var</span> updatePayload <span class="token operator">=</span> <span class="token function">prepareUpdate</span><span class="token punctuation">(</span>instance<span class="token punctuation">,</span> type<span class="token punctuation">,</span> oldProps<span class="token punctuation">,</span> newProps<span class="token punctuation">,</span> rootContainerInstance<span class="token punctuation">,</span> currentHostContext<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    workInProgress<span class="token punctuation">.</span>updateQueue <span class="token operator">=</span> updatePayload<span class="token punctuation">;</span>
+    <span class="token comment">// 如果DOM实例的更新内容不为空，则问当前结点标记Update</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>updatePayload<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">markUpdate</span><span class="token punctuation">(</span>workInProgress<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.6 为Fiber结点标记 Update</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在完成工作单元时，使用<code>updateHostComponent</code>函数完成<code>HostComponent</code>类型的工作单元（Fiber 结点）。这时 React 使用<code>prepareUpdate</code>方法对比结点对应 DOM 实例的属性及内容是否发生变化，如果有变化则为该结点标记<code>Update</code>。</p>
+</div><div class="cl-preview-section"><h3 id="标记插入并更新（placementandupdate）">标记插入并更新（<code>PlacementAndUpdate</code>）</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">如果一个结点既被标记了<code>Placement</code>也被标记了<code>Update</code>，那么该结点的 effectTag 的二进制对应的就是<code>PlacementAndUpdate</code>。</p>
+</div><div class="cl-preview-section"><h3 id="标记删除（deletion）">标记删除（<code>Deletion</code>）</h3>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">function</span> <span class="token function">deleteChild</span><span class="token punctuation">(</span>returnFiber<span class="token punctuation">,</span> childToDelete<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  childToDelete<span class="token punctuation">.</span>nextEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  childToDelete<span class="token punctuation">.</span>effectTag <span class="token operator">=</span> Deletion<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.7 为Fiber结点标记 Deletion</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">在「协调」数组元素时，如果新的数组元素比此处 Fiber 树的结点数量少时，那么丢下的那个结点将会被调用<code>deleteChild</code>函数标记为<code>Deletion</code>。还有一种情况就是程序中控制元素显示的条件值变为<code>false</code>也会导致当前结点被标记为<code>Deletion</code>。</p>
+</div><div class="cl-preview-section"><h2 id="完成工作单元—计算现有-dom-实例与新的结点之间的属性变化" style="font-size: 30px;">完成工作单元—计算现有 DOM 实例与新的结点之间的属性变化</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序更新渲染时，在完成工作单元阶段相对于首次渲染 React 需要重点计算现有的 DOM 实例与新的结点之间的属性变化，此处逻辑主要在<code>diffProperties</code>函数中执行，见代码示例 6.2.8。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-dom/src/client/ReactDOMComponent.js</span>
+<span class="token keyword">function</span> <span class="token function">diffProperties</span><span class="token punctuation">(</span>domElement<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> lastRawProps<span class="token punctuation">,</span> nextRawProps<span class="token punctuation">,</span> rootContainerElement<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 存储diff后最终的更新信息</span>
+  <span class="token keyword">var</span> updatePayload <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 现有的（上一个）props</span>
+  <span class="token keyword">var</span> lastProps <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token comment">// 新的props</span>
+  <span class="token keyword">var</span> nextProps <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  
+  <span class="token comment">// 第一步：收集现有的props和新的props</span>
+  
+  <span class="token comment">// 如果是表单元素的结点，则分别计算器更新前后其value属性</span>
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>tag<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'input'</span><span class="token punctuation">:</span>
+      lastProps <span class="token operator">=</span> <span class="token function">getHostProps</span><span class="token punctuation">(</span>domElement<span class="token punctuation">,</span> lastRawProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      nextProps <span class="token operator">=</span> <span class="token function">getHostProps</span><span class="token punctuation">(</span>domElement<span class="token punctuation">,</span> nextRawProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      updatePayload <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'option'</span><span class="token punctuation">:</span>
+    <span class="token keyword">case</span> <span class="token string">'select'</span><span class="token punctuation">:</span>
+      <span class="token comment">// ...</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+      <span class="token comment">// 非表单元素则从形参中获取更新前后的属性值</span>
+      lastProps <span class="token operator">=</span> lastRawProps<span class="token punctuation">;</span>
+      nextProps <span class="token operator">=</span> nextRawProps<span class="token punctuation">;</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 第二步：收集当前结点所有的style属性</span>
+  
+  <span class="token keyword">var</span> propKey <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> styleName <span class="token operator">=</span> <span class="token keyword">void</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> styleUpdates <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>propKey <span class="token keyword">in</span> lastProps<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 处理style的属性</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>propKey <span class="token operator">===</span> <span class="token string">'style'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">var</span> lastStyle <span class="token operator">=</span> lastProps<span class="token punctuation">[</span>propKey<span class="token punctuation">]</span><span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>styleName <span class="token keyword">in</span> lastStyle<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>lastStyle<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>styleName<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token comment">// 为style对象添加对应的样式名属性，默认值为空</span>
+          styleUpdates<span class="token punctuation">[</span>styleName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 第三步：计算当前结点所有新的的style属性并将各个的值更新到对应styleUpdates[styleName]中</span>
+  
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>propKey <span class="token keyword">in</span> nextProps<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> nextProp <span class="token operator">=</span> nextProps<span class="token punctuation">[</span>propKey<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> lastProp <span class="token operator">=</span> lastProps <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">?</span> lastProps<span class="token punctuation">[</span>propKey<span class="token punctuation">]</span> <span class="token punctuation">:</span> undefined<span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>propKey <span class="token operator">===</span> <span class="token string">'style'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span>styleName <span class="token keyword">in</span> nextProp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span>nextProp<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>styleName<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> lastProp<span class="token punctuation">[</span>styleName<span class="token punctuation">]</span> <span class="token operator">!==</span> nextProp<span class="token punctuation">[</span>styleName<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 将需要更新的样式添加到样式更新对象</span>
+            styleUpdates<span class="token punctuation">[</span>styleName<span class="token punctuation">]</span> <span class="token operator">=</span> nextProp<span class="token punctuation">[</span>styleName<span class="token punctuation">]</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 将styleUpdates添加到updatePayload中</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>styleUpdates<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">(</span>updatePayload <span class="token operator">=</span> updatePayload <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token string">'style'</span><span class="token punctuation">,</span> styleUpdates<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 返回updatePayload</span>
+  <span class="token keyword">return</span> updatePayload<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 6.2.8 diffProperties 函数用于计算更新前后的DOM属性变化</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>diffProperties</code>函数主要用于计算（<code>HostComponet</code>类型的）结点更新前后所有的 style 属性是否发生变化，并将所有发生变化的属性以及对应的值收集起来。这些属性变化的数据在 commit 结点被统一更新到 DOM。</p>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">应用程序更新渲染构建 workInProgress 树的整体流程与首次渲染时基本相同。不同的地方就是对于<code>ClassComponent</code>类型的结点，React 会先处理该结点的更新队列并获取最新的 state，然后判断该结点是否需要执行后续的更新逻辑。如果<code>ClassComponent</code>类型的结点需要执行更新，则通过执行「协调」逻辑获取下一个 Fiber 结点，这个过程中也会进行新元素与当前 Fiber 结点 diff 操作。结点 diff 处理的过程中 React 会为结点标记对应的 effectTag，最常用的几种 effectTag 包括插入（<code>Placement</code>），更新（<code>Update</code>），插入并更新（<code>PlacementAndUpdate</code>）以及删除（<code>Deletion</code>）等。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">下一节将会介绍应用程序更新渲染时 React「协调」与结点 diff 的详细过程。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2397">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            27 React 应用程序更新渲染时内部运行流程概述
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2400">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            29 React v16 版的协调算法是什么样的呢？
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img4.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>

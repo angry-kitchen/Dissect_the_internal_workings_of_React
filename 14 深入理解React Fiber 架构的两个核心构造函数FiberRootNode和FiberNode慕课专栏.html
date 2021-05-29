@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"><title>14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode-慕课专栏</title>
+			<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+			<meta name="renderer" content="webkit">
+			<meta property="qc:admins" content="77103107776157736375">
+			<meta property="wb:webmaster" content="c4f857219bfae3cb">
+			<meta http-equiv="Access-Control-Allow-Origin" content="*">
+			<meta http-equiv="Cache-Control" content="no-transform ">
+			<meta http-equiv="Cache-Control" content="no-siteapp">
+			<link rel="apple-touch-icon" sizes="76x76" href="https://www.imooc.com/static/img/common/touch-icon-ipad.png">
+			<link rel="apple-touch-icon" sizes="120x120" href="https://www.imooc.com/static/img/common/touch-icon-iphone-retina.png">
+			<link rel="apple-touch-icon" sizes="152x152" href="https://www.imooc.com/static/img/common/touch-icon-ipad-retina.png">
+			<link href="https://moco.imooc.com/captcha/style/captcha.min.css" rel="stylesheet">
+			<link rel="stylesheet" href="https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css?t=201907021539" type="text/css">
+			<link rel="stylesheet" href="https://www.imooc.com/static/lib/swiper/swiper-3.4.2.min.css?t=201907021539">
+			<link rel="stylesheet" href="https://static.mukewang.com/static/css/??base.css,common/common-less.css?t=2.5,column/zhuanlanChapter-less.css?t=2.5,course/inc/course_tipoff-less.css?t=2.5?v=201907051055" type="text/css">
+			<link charset="utf-8" rel="stylesheet" href="https://www.imooc.com/static/lib/ueditor/themes/imooc/css/ueditor.css?v=201907021539"><link rel="stylesheet" href="https://www.imooc.com/static/lib/baiduShare/api/css/share_style0_16.css?v=6aba13f0.css"></head>
+			<body><div id="main">
+
+
+<div class="main-con hide-menu">
+    <!-- 左侧菜单 & 索引 -->
+    
+    <div class="right-content" style="padding-left: 0px;">
+        <div class="container clearfix" id="top" style="width: 1134px; display: block;">
+            
+            
+            <div class="center_con js-center_con l" style="width: 1134px;">
+                <div class="article-con">
+                                            <!-- 买过的阅读 -->
+                        
+
+                    
+                    <div class="art-title" style="margin-top: 0px;">
+                        14 深入理解React Fiber 架构的两个核心构造函数FiberRootNode和FiberNode
+                    </div>
+                    <div class="art-info clearfix">
+                        
+                        <span class="l">
+                            更新时间：2020-08-26 14:28:49
+                        </span>
+                    </div>
+                    <div class="art-top">
+                                                <img src="https://img3.sycdn.imooc.com/5f4600fa000174cb06400359.jpg" alt="">
+                                                                        <div class="famous-word-box">
+                            <img src="https://www.imooc.com/static/img/column/bg-l.png" alt="" class="bg1 bg">
+                            <img src="https://www.imooc.com/static/img/column/bg-r.png" alt="" class="bg2 bg">
+                            <div class="famous-word">知识犹如人体的血液一样宝贵。——高士其<p></p></div>
+                        </div>
+                                            </div>
+                    <div class="art-content js-lookimg">
+                        <div id="article_content">
+                            <div class="cl-preview-section"><h2 id="前言" style="font-size: 30px;">前言</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">前面介绍过，React 应用程序运行在 prerende r阶段的主要工作是构建 fiberRoot 对象。在这个阶段会使用<code>FiberRootNode</code>构造函数实例化 fiberRoot 对象，使用<code>FiberNode</code>构造函数实例化 Fiber 树的第一个结点对象。本文将会详细介绍<code>FiberRootNode</code>和<code>FiberNode</code>两个构造函数中的一些重要属性。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>FiberRootNode</code>和<code>FiberNode</code>两个构造函数的实例关系见图 3.4.1。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f3a3d9200018c6c07270982.png" data-original="//img1.sycdn.imooc.com/5f3a3d9200018c6c07270982.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 3.4.1 FiberRootNode 和 FiberNode 两个构造函数实例之间的结构关系</font></center>
+</div><div class="cl-preview-section"><h2 id="fiberrootnode-构造函数用于生成-fiberroot-对象" style="font-size: 30px;">FiberRootNode 构造函数用于生成 fiberRoot 对象</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 对<code>FiberRootNode</code>构造函数的源码见代码示例 3.4.1。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiberRoot.js</span>
+<span class="token keyword">function</span> <span class="token function">FiberRootNode</span><span class="token punctuation">(</span>containerInfo<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> hydrate<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 当前 Fiber 结点的类型</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>tag <span class="token operator">=</span> tag<span class="token punctuation">;</span>
+  <span class="token comment">// current树，见备注 3-4-1.1</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>current <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span> 
+  <span class="token comment">// 包含容器</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>containerInfo <span class="token operator">=</span> containerInfo<span class="token punctuation">;</span> 
+  <span class="token keyword">this</span><span class="token punctuation">.</span>pendingChildren <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>pingCache <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>finishedExpirationTime <span class="token operator">=</span> NoWork<span class="token punctuation">;</span>
+  <span class="token comment">// 存储工作循环（workLoop）结束后的副作用列表，用于commit阶段</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>finishedWork <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span> 
+  <span class="token keyword">this</span><span class="token punctuation">.</span>timeoutHandle <span class="token operator">=</span> noTimeout<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>context <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>pendingContext <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>hydrate <span class="token operator">=</span> hydrate<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>firstBatch <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.4.1 FiberRootNode 构造函数的源码定义</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>备注 3-4-1.1 current 属性</strong></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 应用程序首次渲染时在 prerender 阶段会初始化 <strong>「current 树」</strong>（本质上也是对象哦）。最开始的 current 树只有一个根结点—<code>HostRoot</code>类型的 Fiber 结点。在后面的 render 阶段会根据此时的 current 树创建 <strong>「workInProgress 树」</strong>（同样是对象哦，每个结点都是<code>FiberNode</code>的实例）。在 workInProgress 树上面进行一系列运算（计算更新等），最后将副作用列表（Effect List）传入到 commit 阶段。当 commit 阶段运行完成后将当前的 current 树替换为 workInProgress 树，至此一个更新流程就完成了。这个过程简化描述就是：</p>
+</div><div class="cl-preview-section"><ol>
+<li style="font-size: 20px; line-height: 38px;">在 render 阶段 React 依赖 current 树通过工作循环（workLoop）构建 workInProgress 树；</li>
+<li style="font-size: 20px; line-height: 38px;">在 workInProgress 树进行一些更新计算，得到副作用列表（Effect List）；</li>
+<li style="font-size: 20px; line-height: 38px;">在 commit 阶段将副作用列表渲染到页面后，将 current 树替换为 workInProgress 树（执行<code>current = workInProgress</code>）。</li>
+</ol>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>current 树是未更新前应用程序对应的 Fiber 树，workInProgress 树是需要更新屏幕的 Fiber 树。</strong></p>
+</div><div class="cl-preview-section"><h3 id="fibernode-构造函数用于生成-fiber-结点">FiberNode 构造函数用于生成 Fiber 结点</h3>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">React 对<code>FiberNode</code>构造函数源码见代码示例 3.4.2。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/react-reconciler/src/ReactFiber.js</span>
+<span class="token keyword">function</span> <span class="token function">FiberNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// tag见备注3-4-2.1</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>tag <span class="token operator">=</span> tag<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>key <span class="token operator">=</span> key<span class="token punctuation">;</span>
+  <span class="token comment">// 元素类型</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>elementType <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>type <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// stateNode见备注3-4-2.2</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>stateNode <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// return，child，sibling见备注3-4-2.3</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token keyword">return</span> <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>child <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>sibling <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>index <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>ref <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+	<span class="token comment">// 需要更新的props</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>pendingProps <span class="token operator">=</span> pendingProps<span class="token punctuation">;</span>
+  <span class="token comment">// 当前（未更新前）的props</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>memoizedProps <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 更新队列</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>updateQueue <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 当前（未更新前）的state</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>memoizedState <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>dependencies <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 普通模式，严格模式，并发模式等</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>mode <span class="token operator">=</span> mode<span class="token punctuation">;</span>
+
+  <span class="token comment">// 副作用类型（指插入、更新、插入并更新、删除等）</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>effectTag <span class="token operator">=</span> NoEffect<span class="token punctuation">;</span>
+  <span class="token comment">// 下一个副作用</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>nextEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 第一个副作用</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>firstEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token comment">// 最后一个副作用</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>lastEffect <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+	<span class="token comment">// 过期时间</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>expirationTime <span class="token operator">=</span> NoWork<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>childExpirationTime <span class="token operator">=</span> NoWork<span class="token punctuation">;</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>alternate <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.4.2 FiberNode 构造函数的源码定义</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>return</code>，<code>child</code>和<code>sibling</code>三个属性主要用途是将每个 Fiber 结点连接起来。<code>effectTag</code>，<code>nextEffect</code>，<code>firstEffect</code>和<code>lastEffect</code>四个属性主要用途是生成副作用列表。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>备注3-4-2.1 tag 属性</strong></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>tag</code>属性标识了当前 Fiber 结点的类型，它常见的取值有以下几种，见代码示例 3.4.3。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token comment">// 源码位置：packages/shared/ReactWorkTags.js</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> FunctionComponent <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">// 函数组件元素对应的 Fiber 结点</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> ClassComponent <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment">// Class组件元素对应的 Fiber 结点</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> IndeterminateComponent <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span> <span class="token comment">// 在不确定是 Class 组件元素还是函数组件元素时的取值</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> HostRoot <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span> <span class="token comment">// 对应 Fiber 树的根结点</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> HostPortal <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span> <span class="token comment">// 对应一颗子树，可以另一个渲染器的入口</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> HostComponent <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span> <span class="token comment">// 宿主组件元素（如div，button等）对应的 Fiber 结点</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> HostText <span class="token operator">=</span> <span class="token number">6</span><span class="token punctuation">;</span> <span class="token comment">// 文本元素（如div，button等）对应的 Fiber 结点</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> Fragment <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span> 
+<span class="token operator">...</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.4.3 Fiber 结点的类型</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">Fiber 结点中<code>elementType</code>属性和<code>type</code>的取值基本是保持一致的，这两种属性描述的是 React 元素的类型。<strong>Fiber 结点由元素转换而来，相同的元素类型所对应的 Fiber 结点的<code>tag</code>属性值也是相同的。</strong> 如<code>elementType</code>值为<code>'div'</code>和<code>'span'</code>的 React 元素在 Fiber 架构中都属于「宿主组件元素」，对应 Fiber 结点的 <code>tag</code>属性值是<code>HostComponent</code>。换句话说就是，一种按照 React 元素类型进行分类，一种是按照Fiber 对象的类型进行分类，两者之间有一定的映射关系。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>备注3-4-2.2 stateNode 属性</strong></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">Fiber 对象中<code>stateNode</code>属性用于存储 Fiber 结点在更新完成后的状态，比如<code>HostComponent</code>类型的 Fiber 结点的<code>stateNode</code>属性值是其 DOM 元素实例，<code>ClassComponent</code>类型的 Fiber 结点的<code>stateNode</code>属性值是其组件实例。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript">HostComponent<span class="token punctuation">.</span>stateNode <span class="token operator">--</span><span class="token operator">&gt;</span> #div<span class="token punctuation">,</span> #span
+ClassComponent<span class="token punctuation">.</span>stateNode <span class="token operator">--</span><span class="token operator">&gt;</span> <span class="token keyword">new</span> <span class="token class-name">Component</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span>
+</code></pre>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><strong>备注3-4-2.3 current 树和 Fiber 树到底是什么</strong></p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">我们经常提到 「current 树」 和 「Fiber 树」，为什么会这样称呼呢？</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">Fiber 树其实是一个对象，这个对象通过层层 Fiber 结点的嵌套形成了一个「树」形结构，在数据结构层面它是一个 <strong>链表</strong>。Fiber 树的根结点是<code>HostRoot</code>类型的<code>FiberNode</code>实例。Fiber 结点中的<code>return</code>，<code>child</code>和<code>sibling</code>三个属性分别用于指向 <strong>父结点</strong>，<strong>第一个孩子结点和兄弟结点</strong>。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">现在我们以一个简单的组件为例分析 Fiber 树的实际结构，见代码示例 3.4.4。</p>
+</div><div class="cl-preview-section"><pre class="  language-javascript"><code class="prism  language-javascript"><span class="token keyword">class</span> <span class="token class-name">UpdateCounter</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span><span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&lt;</span>div className<span class="token operator">=</span><span class="token string">"wrap-box"</span><span class="token operator">&gt;</span>
+        <span class="token operator">&lt;</span>button key<span class="token operator">=</span><span class="token string">"1"</span><span class="token operator">&gt;</span>点击计数<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">&gt;</span>
+        <span class="token operator">&lt;</span>span className<span class="token operator">=</span><span class="token string">"span-text"</span> key<span class="token operator">=</span><span class="token string">"2"</span><span class="token operator">&gt;</span><span class="token number">1</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">&gt;</span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div><div class="cl-preview-section"><center><font size="2">代码示例 3.4.4</font></center>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;">通过对代码示例 3.4.4 中的程序进行断点调试，我们绘制出其在内存中的 Fiber 树结构，见图 3.4.2 。</p>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><img class="" src="https://img1.sycdn.imooc.com/5f3a455e0001cc8e21820916.png" data-original="//img1.sycdn.imooc.com/5f3a455e0001cc8e21820916.png" alt="图片描述"></p>
+</div><div class="cl-preview-section"><center><font size="2">图 3.4.2 Fiber 树结构</font></center>
+</div><div class="cl-preview-section"><blockquote>
+<p style="font-size: 20px; line-height: 38px;">建议将本节图 3.4.2 和本章第一节中图 3.1.3 结合在一起理解。此外，本文中提到的 workInProgress 树，Effect list 等内容在第五章介绍 React 应用程序首次渲染时会详细介绍。</p>
+</blockquote>
+</div><div class="cl-preview-section"><h2 id="小结" style="font-size: 30px;">小结</h2>
+</div><div class="cl-preview-section"><p style="font-size: 20px; line-height: 38px;"><code>FiberRootNode</code>构造函数只有一个实例就是 fiberRoot 对象。而每个 Fiber 结点都是 <code>FiberNode</code> 构造函数的实例，它们通过<code>return</code>，<code>child</code>和<code>sibling</code>三个属性连接起来，形成了一个巨大链表。React 对每个结点的更新计算都是在这个链表上完成的。React 在对 Fiber 结点标记更新标识的时候的做法就是为结点的<code>effectTag</code>属性赋不同的值，这个赋值逻辑用了较多的位运算，下一节将会详细 Fiber 结点中的<code>effectTag</code>与位运算。</p>
+</div>}
+                        </div>
+                    </div>
+                                            <!-- 买过的阅读 -->
+                        <div class="art-next-prev clearfix">
+                                                                                                <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2297">
+                                                                    <div class="prev l clearfix">
+                                        <div class="icon l">
+                                            <i class="imv2-arrow3_l"></i>
+                                        </div>
+                                        <p>
+                                            13 了解基于 React Fiber 架构的应用程序整体渲染流程
+                                        </p>
+                                    </div>
+                                </a>
+                                                                                                                            <!-- 已买且开放 或者可以试读 -->
+                                    <a href="/read/86/article/2299">
+                                                                    <div class="next r clearfix">
+                                        <p>
+                                            15 理解 React Fiber 架构中中的 effectTag 与位运算
+                                        </p>
+                                        <div class="icon r">
+                                            <i class="imv2-arrow3_r"></i>
+                                        </div>
+
+                                    </div>
+                                </a>
+                                                    </div>
+                                    </div>
+                <div class="comments-con js-comments-con" id="coments_con">
+                </div>
+
+                
+            </div>
+            
+            
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-jiaQun-new hide" id="modal-jiaQun">
+    <div class="inner" style="">
+        <div class="modal-close js-close-jiaQun">
+            <i class="imv2-close"></i>
+        </div>
+        <div class="content">
+            <img src="https://img4.sycdn.imooc.com/5f7fdcf40001c7e905660544.jpg">
+            <div class="right-info">
+                <div class="title">
+                    扫码加入慕课前端核心用户5群
+                </div>
+                <div class="desc">
+                                            <p class="mb6">验证信息：<span id="joincode">2010301643513137</span><span class="copy js-copy-joincode">复制</span></p>
+                                        <p class="mb6">QQ讨论群号：906667001</p>
+                                            <p>QQ群URL：<a href="https://jq.qq.com/?_wv=1027&amp;k=AKUF96AI" target="_blank">点击访问</a></p>
+                                    </div>
+            </div>
+            <p class="tip">若遇到搜索不到QQ群或加群失败，请联系客服邮箱:kf@imooc.com</p>
+        </div>
+    </div>
+</div>
+ 
+<!-- 专栏介绍页专栏评价 -->
+
+<!-- 专栏介绍页底部三条评价 -->
+
+<!-- 专栏阅读页弹层目录和介绍页页面目录 -->
+
+<!-- 专栏阅读页发布回复 -->
+
+<!-- 专栏阅读页发布评论 -->
+
+<!-- 专栏阅读页底部评论 -->
+
+<!-- 专栏阅读 单个 评论 -->
+
+<!-- 新增回复和展开三条以外回复 -->
+
+<!-- 立即订阅的弹窗 -->
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body></html>
